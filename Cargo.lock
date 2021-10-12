@@ -455,9 +455,9 @@ dependencies = [
 
 [[package]]
 name = "oauth10a"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16037ec7d3911360d6cdcf3a703451057fabc244847b01463da70639f2643d4e"
+checksum = "3ff24d83383018b8c160838ec4c672bbb9a01da23c1f9a54b09e4a874ae00423"
 dependencies = [
  "async-trait",
  "base64",
