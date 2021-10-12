@@ -1,0 +1,38 @@
+[package]
+name = "clevercloud-sdk"
+description = "A rust client and structures to interact with the Clever-Cloud API."
+version = "0.1.0"
+edition = "2018"
+authors = ["Florentin Dubois <florentin.dubois@clever-cloud.com>"]
+license-file = "LICENSE"
+readme = "README.md"
+keywords = [
+    "clevercloud",
+    "sdk",
+    "logging",
+    "metrics",
+    "jsonschemas",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "^0.1.51"
+oauth10a = "^1.0.0"
+log = { version = "^0.4.14", optional = true }
+hyper = { version = "^0.14.13", default-features = false }
+schemars = { version = "^0.8.6", features = [
+    "chrono",
+    "indexmap",
+    "uuid",
+    "bytes",
+    "url",
+], optional = true }
+serde = { version = "^1.0.130", features = ["derive"] }
+serde_repr = "^0.1.7"
+
+[features]
+default = ["logging"]
+jsonschemas = ["schemars"]
+logging = ["oauth10a/logging", "log"]
+metrics = ["oauth10a/metrics"]
