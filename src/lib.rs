@@ -3,6 +3,8 @@
 //! This module provide a client and structures to interact with clever-cloud
 //! api.
 
+use std::fmt::Debug;
+
 pub use oauth10a::client as oauth10a;
 
 use async_trait::async_trait;
@@ -32,6 +34,7 @@ pub struct Client {
 impl Request for Client {
     type Error = ClientError;
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     async fn request<T, U>(
         &self,
         method: &Method,
@@ -39,8 +42,8 @@ impl Request for Client {
         payload: &T,
     ) -> Result<U, Self::Error>
     where
-        T: Serialize + Send + Sync,
-        U: DeserializeOwned + Send + Sync,
+        T: Serialize + Debug + Send + Sync,
+        U: DeserializeOwned + Debug + Send + Sync,
     {
         self.inner.request(method, endpoint, payload).await
     }
@@ -50,43 +53,49 @@ impl Request for Client {
 impl RestClient for Client {
     type Error = ClientError;
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     async fn get<T>(&self, endpoint: &str) -> Result<T, Self::Error>
     where
-        T: DeserializeOwned + Send + Sync,
+        T: DeserializeOwned + Debug + Send + Sync,
     {
         self.inner.get(endpoint).await
     }
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     async fn post<T, U>(&self, endpoint: &str, payload: &T) -> Result<U, Self::Error>
     where
-        T: Serialize + Send + Sync,
-        U: DeserializeOwned + Send + Sync,
+        T: Serialize + Debug + Send + Sync,
+        U: DeserializeOwned + Debug + Send + Sync,
     {
         self.inner.post(endpoint, payload).await
     }
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     async fn put<T, U>(&self, endpoint: &str, payload: &T) -> Result<U, Self::Error>
     where
-        T: Serialize + Send + Sync,
-        U: DeserializeOwned + Send + Sync,
+        T: Serialize + Debug + Send + Sync,
+        U: DeserializeOwned + Debug + Send + Sync,
     {
         self.inner.put(endpoint, payload).await
     }
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     async fn patch<T, U>(&self, endpoint: &str, payload: &T) -> Result<U, Self::Error>
     where
-        T: Serialize + Send + Sync,
-        U: DeserializeOwned + Send + Sync,
+        T: Serialize + Debug + Send + Sync,
+        U: DeserializeOwned + Debug + Send + Sync,
     {
         self.inner.patch(endpoint, payload).await
     }
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     async fn delete(&self, endpoint: &str) -> Result<(), Self::Error> {
         self.inner.delete(endpoint).await
     }
 }
 
 impl From<Credentials> for Client {
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from(credentials: Credentials) -> Self {
         Self {
             inner: oauth10a::Client::from(credentials),
@@ -96,6 +105,7 @@ impl From<Credentials> for Client {
 }
 
 impl Default for Client {
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     fn default() -> Self {
         Self {
             inner: oauth10a::Client::default(),
@@ -105,12 +115,14 @@ impl Default for Client {
 }
 
 impl Client {
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     pub fn new(endpoint: String, credentials: Option<Credentials>) -> Self {
         let mut inner = oauth10a::Client::default();
         inner.set_credentials(credentials);
         Self { inner, endpoint }
     }
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     pub fn set_credentials(&mut self, credentials: Option<Credentials>) {
         self.inner.set_credentials(credentials);
     }

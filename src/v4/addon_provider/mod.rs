@@ -41,6 +41,7 @@ pub enum AddonProviderId {
 impl FromStr for AddonProviderId {
     type Err = Box<dyn Error + Send + Sync>;
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "postgresql-addon" => Self::PostgreSql,
@@ -54,6 +55,7 @@ impl FromStr for AddonProviderId {
 impl TryFrom<String> for AddonProviderId {
     type Error = Box<dyn Error + Send + Sync>;
 
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(&s)
     }
@@ -61,6 +63,7 @@ impl TryFrom<String> for AddonProviderId {
 
 #[allow(clippy::from_over_into)]
 impl Into<String> for AddonProviderId {
+    #[cfg_attr(feature = "trace", tracing::instrument)]
     fn into(self) -> String {
         self.to_string()
     }

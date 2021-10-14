@@ -157,6 +157,7 @@ pub struct EnvironmentVariable {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the list of addons for the given organisation
 pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, ClientError> {
     let path = format!(
@@ -172,9 +173,10 @@ pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, 
         );
     }
 
-    Ok(client.get(&path).await?)
+    client.get(&path).await
 }
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the addon for the given the organisation and identifier
 pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Addon, ClientError> {
     let path = format!(
@@ -187,9 +189,10 @@ pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Add
         debug!("execute a request to get information about an addon, path: '{}', organisation: '{}', id: '{}'", &path, organisation_id, id);
     }
 
-    Ok(client.get(&path).await?)
+    client.get(&path).await
 }
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// create the addon and returns it
 pub async fn create(
     client: &Client,
@@ -206,9 +209,10 @@ pub async fn create(
         debug!("execute a request to create an addon, path: '{}', organisation: '{}', name: '{}', region: '{}', plan: '{}', provider-id: '{}'", &path, organisation_id, &opts.name, &opts.region, &opts.plan, &opts.provider_id.to_string());
     }
 
-    Ok(client.post(&path, opts).await?)
+    client.post(&path, opts).await
 }
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// delete the given addon
 pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<(), ClientError> {
     let path = format!(
@@ -224,9 +228,10 @@ pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<
         );
     }
 
-    Ok(client.delete(&path).await?)
+    client.delete(&path).await
 }
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns environment variables for an addon
 pub async fn environment(
     client: &Client,
