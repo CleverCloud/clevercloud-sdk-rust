@@ -122,6 +122,7 @@ pub struct AddonProvider {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the postgresql addon provider
 pub async fn get(client: &Client) -> Result<AddonProvider, ClientError> {
     let path = format!(
@@ -135,5 +136,5 @@ pub async fn get(client: &Client) -> Result<AddonProvider, ClientError> {
         debug!("execute a request to get information about the postgresql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::PostgreSql.to_string());
     }
 
-    Ok(client.get(&path).await?)
+    client.get(&path).await
 }

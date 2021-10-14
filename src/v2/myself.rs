@@ -50,6 +50,7 @@ pub struct Myself {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the person logged in
 pub async fn get(client: &Client) -> Result<Myself, ClientError> {
     let path = format!("{}/v2/self", client.endpoint);
@@ -62,5 +63,5 @@ pub async fn get(client: &Client) -> Result<Myself, ClientError> {
         );
     }
 
-    Ok(client.get(&path).await?)
+    client.get(&path).await
 }

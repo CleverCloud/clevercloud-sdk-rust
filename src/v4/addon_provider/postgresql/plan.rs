@@ -75,6 +75,7 @@ pub struct AddonProviderPlan {
 // -----------------------------------------------------------------------------
 // Helpers method
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the list of plan for the postgresql addon provider
 pub async fn list(
     client: &Client,
@@ -92,9 +93,10 @@ pub async fn list(
         debug!("execute a request to list plans of the postgresql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::PostgreSql.to_string());
     }
 
-    Ok(client.get(&path).await?)
+    client.get(&path).await
 }
 
+#[cfg_attr(feature = "trace", tracing::instrument)]
 /// list plans for the organisation and try to find one matching the pattern
 /// returns the plan if found
 pub async fn find(
