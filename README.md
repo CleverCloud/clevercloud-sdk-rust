@@ -12,7 +12,7 @@ This crate is under development, you can use it, but it may have bugs or unimple
 To install this dependency, just add the following line to your `Cargo.toml` manifest.
 
 ```toml
-clevercloud-sdk = { version = "^0.1.1", features = ["metrics", "jsonschemas"] }
+clevercloud-sdk = { version = "^0.2.0", features = ["metrics", "jsonschemas"] }
 ```
 
 ## Usage
@@ -44,6 +44,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 
 | name        | description                                                                                       |
 | ----------- | ------------------------------------------------------------------------------------------------- |
+| trace       | Use `tracing` crate to expose traces                                                              |
+| tokio       | Use `tokio` crate as back-end for `tracing` crate                                                 |
 | jsonschemas | Use `schemars` to add a derive instruction to generate json schemas representation of structures  |
 | logging     | Use the `log` facility crate to print logs. Implies `oauth10a/logging` feature                    |
 | metrics     | Use `lazy_static` and `prometheus` crates to register metrics. Implies `oauth10a/metrics` feature |
