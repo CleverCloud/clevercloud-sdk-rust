@@ -79,13 +79,12 @@ pub struct AddonProviderPlan {
 /// returns the list of plan for the postgresql addon provider
 pub async fn list(
     client: &Client,
+    addon_provider_id: &AddonProviderId,
     organisation_id: &str,
 ) -> Result<AddonProviderPlan, ClientError> {
     let path = format!(
         "{}/v2/products/addonproviders/{}?orga_id={}",
-        client.endpoint,
-        AddonProviderId::PostgreSql,
-        organisation_id
+        client.endpoint, addon_provider_id, organisation_id
     );
 
     #[cfg(feature = "logging")]
@@ -101,10 +100,11 @@ pub async fn list(
 /// returns the plan if found
 pub async fn find(
     client: &Client,
+    addon_provider_id: &AddonProviderId,
     organisation_id: &str,
     pattern: &str,
 ) -> Result<Option<Plan>, ClientError> {
-    Ok(list(client, organisation_id)
+    Ok(list(client, addon_provider_id, organisation_id)
         .await?
         .plans
         .iter()
