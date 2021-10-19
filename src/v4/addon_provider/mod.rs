@@ -4,9 +4,11 @@
 //! addon-provider
 
 use std::{
+    collections::BTreeMap,
     convert::TryFrom,
     error::Error,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Debug, Display, Formatter},
+    hash::Hash,
     str::FromStr,
 };
 
@@ -14,7 +16,9 @@ use std::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub mod plan;
 pub mod postgresql;
+pub mod redis;
 
 // -----------------------------------------------------------------------------
 // Feature structure
@@ -29,6 +33,43 @@ pub struct Feature {
 }
 
 // -----------------------------------------------------------------------------
+// Cluster structure
+
+#[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct Cluster<T> {
+    #[serde(rename = "id")]
+    pub id: String,
+    #[serde(rename = "label")]
+    pub label: String,
+    #[serde(rename = "zone")]
+    pub zone: String,
+    #[serde(rename = "features")]
+    pub features: Vec<Feature>,
+    #[serde(rename = "version")]
+    pub version: T,
+}
+
+// -----------------------------------------------------------------------------
+// AddonProvider structure
+
+#[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+pub struct AddonProvider<T>
+where
+    T: Ord,
+{
+    #[serde(rename = "providerId")]
+    pub provider_id: AddonProviderId,
+    #[serde(rename = "clusters")]
+    pub clusters: Vec<Cluster<T>>,
+    #[serde(rename = "dedicated")]
+    pub dedicated: BTreeMap<T, Vec<Feature>>,
+    #[serde(rename = "defaultDedicatedVersion")]
+    pub default: T,
+}
+
+// -----------------------------------------------------------------------------
 // AddonProviderName structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
@@ -36,6 +77,7 @@ pub struct Feature {
 #[serde(untagged, try_from = "String", into = "String")]
 pub enum AddonProviderId {
     PostgreSql,
+    Redis,
 }
 
 impl FromStr for AddonProviderId {
@@ -43,10 +85,11 @@ impl FromStr for AddonProviderId {
 
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s {
+        Ok(match s.to_lowercase().as_str() {
+            "redis-addon" => Self::Redis,
             "postgresql-addon" => Self::PostgreSql,
             _ => {
-                return Err(format!("failed to parse addon provider identifier {}, available option is 'postgresql-addon'", s).into())
+                return Err(format!("failed to parse addon provider identifier {}, available options are 'postgresql-addon' or 'redis-addon'", s).into())
             }
         })
     }
@@ -73,6 +116,7 @@ impl Display for AddonProviderId {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::PostgreSql => write!(f, "postgresql-addon"),
+            Self::Redis => write!(f, "redis-addon"),
         }
     }
 }

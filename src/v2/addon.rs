@@ -122,6 +122,12 @@ pub enum AddonOpts {
         #[serde(rename = "encryption")]
         encryption: String,
     },
+    Redis {
+        #[serde(rename = "version")]
+        version: String,
+        #[serde(rename = "encryption")]
+        encryption: String,
+    },
 }
 
 // -----------------------------------------------------------------------------

@@ -4,7 +4,6 @@
 //! addon provider
 
 use std::{
-    collections::BTreeMap,
     convert::TryFrom,
     error::Error,
     fmt::{self, Display, Formatter},
@@ -15,16 +14,13 @@ use std::{
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
-use schemars::{JsonSchema, JsonSchema_repr as JsonSchemaRepr};
-use serde::{Deserialize, Serialize};
+use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
 
 use crate::{
-    v4::addon_provider::{AddonProviderId, Feature},
+    v4::addon_provider::{AddonProvider, AddonProviderId},
     Client,
 };
-
-pub mod plan;
 
 // -----------------------------------------------------------------------------
 // Version enum
@@ -86,45 +82,11 @@ impl Display for Version {
 }
 
 // -----------------------------------------------------------------------------
-// Cluster structure
-
-#[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
-pub struct Cluster {
-    #[serde(rename = "id")]
-    pub id: String,
-    #[serde(rename = "label")]
-    pub label: String,
-    #[serde(rename = "zone")]
-    pub zone: String,
-    #[serde(rename = "version")]
-    pub version: Version,
-    #[serde(rename = "features")]
-    pub features: Vec<Feature>,
-}
-
-// -----------------------------------------------------------------------------
-// AddonProvider structure
-
-#[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
-pub struct AddonProvider {
-    #[serde(rename = "providerId")]
-    pub provider_id: AddonProviderId,
-    #[serde(rename = "clusters")]
-    pub clusters: Vec<Cluster>,
-    #[serde(rename = "dedicated")]
-    pub dedicated: BTreeMap<Version, Vec<Feature>>,
-    #[serde(rename = "defaultDedicatedVersion")]
-    pub default: Version,
-}
-
-// -----------------------------------------------------------------------------
 // Helpers functions
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the postgresql addon provider
-pub async fn get(client: &Client) -> Result<AddonProvider, ClientError> {
+pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,
