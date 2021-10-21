@@ -28,7 +28,7 @@ use crate::{
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchemaRepr))]
 #[derive(SerializeRepr, DeserializeRepr, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Debug)]
 #[serde(untagged)]
-#[repr(u8)]
+#[repr(i32)]
 pub enum Version {
     V13 = 13,
     V12 = 12,

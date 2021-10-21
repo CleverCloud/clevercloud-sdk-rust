@@ -1,6 +1,6 @@
-//! # Redis addon provider module
+//! # MySql addon provider module
 //!
-//! This module provide helpers and structures to interact with the redis
+//! This module provide helpers and structures to interact with the mysql
 //! addon provider
 
 use std::{
@@ -30,7 +30,8 @@ use crate::{
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
-    V6dot0dot10 = 6010,
+    V5dot7 = 57,
+    V8dot0 = 80,
 }
 
 impl FromStr for Version {
@@ -38,10 +39,11 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "6.0.10" => Self::V6dot0dot10,
+            "5.7" => Self::V5dot7,
+            "8.0" => Self::V8dot0,
             _ => {
                 return Err(format!(
-                    "failed to parse version from {}, available version is 6.0.10",
+                    "failed to parse version from {}, available versions are 5.7 and 8.0",
                     s
                 )
                 .into());
@@ -68,7 +70,8 @@ impl Into<String> for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::V6dot0dot10 => write!(f, "6.0.10"),
+            Self::V5dot7 => write!(f, "5.7"),
+            Self::V8dot0 => write!(f, "8.0"),
         }
     }
 }
@@ -77,17 +80,17 @@ impl Display for Version {
 // Helpers functions
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
-/// returns information about the redis addon provider
+/// returns information about the mysql addon provider
 pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,
-        AddonProviderId::Redis
+        AddonProviderId::MySql
     );
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about the redis addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::Redis.to_string());
+        debug!("execute a request to get information about the mysql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MySql.to_string());
     }
 
     client.get(&path).await

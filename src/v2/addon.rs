@@ -114,20 +114,11 @@ pub struct Addon {
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
 #[derive(Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord, Clone, Debug)]
-#[serde(untagged)]
-pub enum AddonOpts {
-    PostgreSql {
-        #[serde(rename = "version")]
-        version: String,
-        #[serde(rename = "encryption")]
-        encryption: String,
-    },
-    Redis {
-        #[serde(rename = "version")]
-        version: String,
-        #[serde(rename = "encryption")]
-        encryption: String,
-    },
+pub struct AddonOpts {
+    #[serde(rename = "version")]
+    pub version: String,
+    #[serde(rename = "encryption")]
+    pub encryption: String,
 }
 
 // -----------------------------------------------------------------------------
