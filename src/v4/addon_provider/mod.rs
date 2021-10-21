@@ -16,6 +16,8 @@ use std::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub mod mongodb;
+pub mod mysql;
 pub mod plan;
 pub mod postgresql;
 pub mod redis;
@@ -78,6 +80,8 @@ where
 pub enum AddonProviderId {
     PostgreSql,
     Redis,
+    MySql,
+    MongoDb,
 }
 
 impl FromStr for AddonProviderId {
@@ -86,10 +90,12 @@ impl FromStr for AddonProviderId {
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s.to_lowercase().as_str() {
+            "mysql-addon" => Self::MySql,
             "redis-addon" => Self::Redis,
             "postgresql-addon" => Self::PostgreSql,
+            "mongodb-addon" => Self::MongoDb,
             _ => {
-                return Err(format!("failed to parse addon provider identifier {}, available options are 'postgresql-addon' or 'redis-addon'", s).into())
+                return Err(format!("failed to parse addon provider identifier {}, available options are 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'", s).into())
             }
         })
     }
@@ -117,6 +123,8 @@ impl Display for AddonProviderId {
         match self {
             Self::PostgreSql => write!(f, "postgresql-addon"),
             Self::Redis => write!(f, "redis-addon"),
+            Self::MySql => write!(f, "mysql-addon"),
+            Self::MongoDb => write!(f, "mongodb-addon"),
         }
     }
 }

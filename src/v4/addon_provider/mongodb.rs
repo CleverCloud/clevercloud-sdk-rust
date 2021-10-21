@@ -1,6 +1,6 @@
-//! # Redis addon provider module
+//! # MongoDb addon provider module
 //!
-//! This module provide helpers and structures to interact with the redis
+//! This module provide helpers and structures to interact with the mongodb
 //! addon provider
 
 use std::{
@@ -30,7 +30,7 @@ use crate::{
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
-    V6dot0dot10 = 6010,
+    V4dot0dot3 = 403,
 }
 
 impl FromStr for Version {
@@ -38,10 +38,10 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "6.0.10" => Self::V6dot0dot10,
+            "4.0.3" => Self::V4dot0dot3,
             _ => {
                 return Err(format!(
-                    "failed to parse version from {}, available version is 6.0.10",
+                    "failed to parse version from {}, available versioni is 4.0.3",
                     s
                 )
                 .into());
@@ -68,7 +68,7 @@ impl Into<String> for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
-            Self::V6dot0dot10 => write!(f, "6.0.10"),
+            Self::V4dot0dot3 => write!(f, "4.0.3"),
         }
     }
 }
@@ -77,17 +77,17 @@ impl Display for Version {
 // Helpers functions
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
-/// returns information about the redis addon provider
+/// returns information about the mongodb addon provider
 pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,
-        AddonProviderId::Redis
+        AddonProviderId::MongoDb
     );
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about the redis addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::Redis.to_string());
+        debug!("execute a request to get information about the mongodb addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MongoDb.to_string());
     }
 
     client.get(&path).await
