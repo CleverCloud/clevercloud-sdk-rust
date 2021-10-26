@@ -113,12 +113,12 @@ pub struct Addon {
 // AddonOpts enum
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord, Clone, Debug)]
+#[derive(Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord, Clone, Debug, Default)]
 pub struct AddonOpts {
-    #[serde(rename = "version")]
-    pub version: String,
-    #[serde(rename = "encryption")]
-    pub encryption: String,
+    #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(rename = "encryption", skip_serializing_if = "Option::is_none")]
+    pub encryption: Option<String>,
 }
 
 // -----------------------------------------------------------------------------

@@ -82,6 +82,7 @@ pub enum AddonProviderId {
     Redis,
     MySql,
     MongoDb,
+    Pulsar,
 }
 
 impl FromStr for AddonProviderId {
@@ -94,8 +95,9 @@ impl FromStr for AddonProviderId {
             "redis-addon" => Self::Redis,
             "postgresql-addon" => Self::PostgreSql,
             "mongodb-addon" => Self::MongoDb,
+            "addon-pulsar" => Self::Pulsar,
             _ => {
-                return Err(format!("failed to parse addon provider identifier {}, available options are 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'", s).into())
+                return Err(format!("failed to parse addon provider identifier {}, available options are 'addon-pulsar', 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'", s).into())
             }
         })
     }
@@ -125,6 +127,7 @@ impl Display for AddonProviderId {
             Self::Redis => write!(f, "redis-addon"),
             Self::MySql => write!(f, "mysql-addon"),
             Self::MongoDb => write!(f, "mongodb-addon"),
+            Self::Pulsar => write!(f, "addon-pulsar"),
         }
     }
 }
