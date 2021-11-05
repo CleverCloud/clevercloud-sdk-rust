@@ -3,9 +3,11 @@ name = "clevercloud-sdk"
 description = "A rust client and structures to interact with the Clever-Cloud API."
 version = "0.5.0"
 edition = "2021"
+rust-version = "1.56"
 authors = ["Florentin Dubois <florentin.dubois@clever-cloud.com>"]
 license-file = "LICENSE"
 readme = "README.md"
+repository = "https://github.com/CleverCloud/clevercloud-sdk-rust"
 keywords = [
     "clevercloud",
     "sdk",
