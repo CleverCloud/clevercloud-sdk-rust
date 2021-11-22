@@ -20,10 +20,10 @@ keywords = [
 
 [dependencies]
 async-trait = "^0.1.51"
-oauth10a = "^1.2.0"
+oauth10a = "^1.2.1"
 log = { version = "^0.4.14", optional = true }
-hyper = { version = "^0.14.13", default-features = false }
-schemars = { version = "^0.8.6", features = [
+hyper = { version = "^0.14.15", default-features = false }
+schemars = { version = "^0.8.7", features = [
     "chrono",
     "indexmap",
     "uuid",
