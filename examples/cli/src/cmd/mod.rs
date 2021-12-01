@@ -15,6 +15,7 @@ use structopt::StructOpt;
 
 use crate::cfg::Configuration;
 
+pub mod addon;
 pub mod myself;
 
 // -----------------------------------------------------------------------------
@@ -88,6 +89,9 @@ pub enum Command {
     /// Interact with the current user
     #[structopt(name = "self", aliases = &["sel", "se", "s"])]
     Myself(myself::Myself),
+    /// Interact with addons
+    #[structopt(name = "addon", aliases = &["addo", "add", "ad", "a"])]
+    Addon(addon::Addon),
 }
 
 #[async_trait::async_trait]
@@ -100,6 +104,10 @@ impl Executor for Command {
                 .execute(config)
                 .await
                 .map_err(|err| format!("faild to execute current user command, {}", err).into()),
+            Self::Addon(cmd) => cmd
+                .execute(config)
+                .await
+                .map_err(|err| format!("faild to execute addon command, {}", err).into()),
         }
     }
 }
@@ -110,7 +118,7 @@ impl Executor for Command {
 /// supports
 #[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
 pub struct Args {
-    /// Specified a configuration file
+    /// Specify a configuration file
     #[structopt(short = "c", long = "config", global = true)]
     pub config: Option<PathBuf>,
     /// Increase log verbosity
