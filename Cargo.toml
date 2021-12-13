@@ -19,18 +19,18 @@ keywords = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "^0.1.51"
-oauth10a = "^1.2.2"
+async-trait = "^0.1.52"
+oauth10a = "^1.2.3"
 log = { version = "^0.4.14", optional = true }
-hyper = { version = "^0.14.15", default-features = false }
-schemars = { version = "^0.8.7", features = [
+hyper = { version = "^0.14.16", default-features = false }
+schemars = { version = "^0.8.8", features = [
     "chrono",
     "indexmap",
     "uuid",
     "bytes",
     "url",
 ], optional = true }
-serde = { version = "^1.0.130", features = ["derive"] }
+serde = { version = "^1.0.131", features = ["derive"] }
 serde_repr = "^0.1.7"
 tracing = { version = "^0.1.29", optional = true }
 tracing-futures = { version = "^0.2.5", optional = true }
