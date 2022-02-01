@@ -20,7 +20,7 @@ keywords = [
 
 [dependencies]
 async-trait = "^0.1.52"
-oauth10a = "^1.2.4"
+oauth10a = "^1.2.5"
 log = { version = "^0.4.14", optional = true }
 hyper = { version = "^0.14.16", default-features = false }
 schemars = { version = "^0.8.8", features = [
@@ -30,7 +30,7 @@ schemars = { version = "^0.8.8", features = [
     "bytes",
     "url",
 ], optional = true }
-serde = { version = "^1.0.133", features = ["derive"] }
+serde = { version = "^1.0.136", features = ["derive"] }
 serde_repr = "^0.1.7"
 tracing = { version = "^0.1.29", optional = true }
 tracing-futures = { version = "^0.2.5", optional = true }
