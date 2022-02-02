@@ -165,6 +165,7 @@ dependencies = [
  "serde_repr",
  "tracing",
  "tracing-futures",
+ "uuid",
 ]
 
 [[package]]
