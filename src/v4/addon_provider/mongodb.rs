@@ -5,7 +5,6 @@
 
 use std::{
     convert::TryFrom,
-    error::Error,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
@@ -23,6 +22,17 @@ use crate::{
 };
 
 // -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to parse version from '{0}', available version is 4.0.3")]
+    ParseVersion(String),
+    #[error("failed to get information about addon provider '{0}', {1}")]
+    Get(AddonProviderId, ClientError),
+}
+
+// -----------------------------------------------------------------------------
 // Version enum
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchemaRepr))]
@@ -34,24 +44,20 @@ pub enum Version {
 }
 
 impl FromStr for Version {
-    type Err = Box<dyn Error + Send + Sync>;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "4.0.3" => Self::V4dot0dot3,
             _ => {
-                return Err(format!(
-                    "failed to parse version from {}, available versioni is 4.0.3",
-                    s
-                )
-                .into());
+                return Err(Error::ParseVersion(s.to_owned()));
             }
         })
     }
 }
 
 impl TryFrom<String> for Version {
-    type Error = Box<dyn Error + Send + Sync>;
+    type Error = Error;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(&s)
@@ -76,9 +82,9 @@ impl Display for Version {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the mongodb addon provider
-pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError> {
+#[cfg_attr(feature = "trace", tracing::instrument)]
+pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,
@@ -87,8 +93,11 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError>
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about the mongodb addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MongoDb.to_string());
+        debug!("execute a request to get information about the mongodb addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MongoDb);
     }
 
-    client.get(&path).await
+    client
+        .get(&path)
+        .await
+        .map_err(|err| Error::Get(AddonProviderId::MongoDb, err))
 }

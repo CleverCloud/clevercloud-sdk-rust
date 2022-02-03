@@ -2,11 +2,27 @@
 //!
 //! This module provides utilities to retrieve and parse configuration
 
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use clevercloud_sdk::oauth10a::Credentials as CleverCloudCredentials;
-use config::{Config, File};
+use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
+
+// -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to load configuration from file '{0}', {1}")]
+    LoadConfiguration(String, ConfigError),
+    #[error("failed to load configuration from default paths, {0}")]
+    LoadDefaultConfiguration(ConfigError),
+    #[error("failed to cast configuration, {0}")]
+    Cast(ConfigError),
+}
+
+// -----------------------------------------------------------------------------
+// Credentials structure
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 pub struct Credentials {
@@ -32,6 +48,9 @@ impl Into<CleverCloudCredentials> for Credentials {
     }
 }
 
+// -----------------------------------------------------------------------------
+// Configuration structure
+
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 pub struct Configuration {
     #[serde(rename = "credentials")]
@@ -39,29 +58,21 @@ pub struct Configuration {
 }
 
 impl TryFrom<&PathBuf> for Configuration {
-    type Error = Box<dyn Error + Send + Sync>;
+    type Error = Error;
 
     fn try_from(pb: &PathBuf) -> Result<Self, Self::Error> {
         let mut config = Config::new();
 
         config
             .merge(File::from(pb.as_path()).required(true))
-            .map_err(|err| {
-                format!(
-                    "faild to load configuration from file '{}', {}",
-                    pb.display(),
-                    err
-                )
-            })?;
+            .map_err(|err| Error::LoadConfiguration(pb.display().to_string(), err))?;
 
-        Ok(config
-            .try_into()
-            .map_err(|err| format!("failed to cast configuration, {}", err))?)
+        config.try_into().map_err(Error::Cast)
     }
 }
 
 impl Configuration {
-    pub fn try_default() -> Result<Self, Box<dyn Error + Send + Sync>> {
+    pub fn try_default() -> Result<Self, Error> {
         let mut config = Config::new();
         let paths = vec![
             format!("/usr/share/{}/config", env!("CARGO_PKG_NAME")),
@@ -88,10 +99,8 @@ impl Configuration {
                     .map(|path| File::from(path).required(false))
                     .collect::<Vec<_>>(),
             )
-            .map_err(|err| format!("faild to load configuration from default paths, {}", err))?;
+            .map_err(Error::LoadDefaultConfiguration)?;
 
-        Ok(config
-            .try_into()
-            .map_err(|err| format!("failed to cast configuration, {}", err))?)
+        config.try_into().map_err(Error::Cast)
     }
 }

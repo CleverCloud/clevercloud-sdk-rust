@@ -73,6 +73,15 @@ pub struct AddonProviderPlan {
 }
 
 // -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to list plan of addon provider '{0}' of organisation '{1}', {2}")]
+    List(AddonProviderId, String, ClientError),
+}
+
+// -----------------------------------------------------------------------------
 // Helpers method
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
@@ -81,7 +90,7 @@ pub async fn list(
     client: &Client,
     addon_provider_id: &AddonProviderId,
     organisation_id: &str,
-) -> Result<AddonProviderPlan, ClientError> {
+) -> Result<AddonProviderPlan, Error> {
     let path = format!(
         "{}/v2/products/addonproviders/{}?orga_id={}",
         client.endpoint, addon_provider_id, organisation_id
@@ -89,10 +98,19 @@ pub async fn list(
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to list plans of the postgresql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::PostgreSql.to_string());
+        debug!(
+            "execute a request to list plans of the addon-provider, path: '{}', name: '{}'",
+            &path, addon_provider_id
+        );
     }
 
-    client.get(&path).await
+    client.get(&path).await.map_err(|err| {
+        Error::List(
+            addon_provider_id.to_owned(),
+            organisation_id.to_owned(),
+            err,
+        )
+    })
 }
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
@@ -103,7 +121,7 @@ pub async fn find(
     addon_provider_id: &AddonProviderId,
     organisation_id: &str,
     pattern: &str,
-) -> Result<Option<Plan>, ClientError> {
+) -> Result<Option<Plan>, Error> {
     Ok(list(client, addon_provider_id, organisation_id)
         .await?
         .plans
