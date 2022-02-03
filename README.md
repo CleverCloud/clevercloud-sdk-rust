@@ -1,5 +1,9 @@
 # Clever-Cloud Software Development Kit - Rust edition
 
+[![crates.io](https://img.shields.io/crates/v/clevercloud-sdk.svg)](https://crates.io/crates/clevercloud-sdk)
+[![Released API docs](https://docs.rs/clevercloud-sdk/badge.svg)](https://docs.rs/clevercloud-sdk)
+[![Continuous integration](https://github.com/CleverCloud/clevercloud-sdk-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CleverCloud/clevercloud-sdk-rust/actions/workflows/ci.yml)
+
 > This crate provides structures and client to interact with the Clever-Cloud
 > API.
 
@@ -39,6 +43,8 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     Ok(())
 }
 ```
+
+You could found more examples of how you could use the clevercloud-sdk by looking at the [command line](examples/cli/README.md) example.
 
 ## Features
 
