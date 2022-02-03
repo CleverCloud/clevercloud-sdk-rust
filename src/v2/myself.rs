@@ -1,3 +1,8 @@
+//! # Myself module
+//!
+//! This module provides structures and helpers to interact with the user api
+//! version 2
+
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -48,11 +53,20 @@ pub struct Myself {
 }
 
 // -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to get information about the current user, {0}")]
+    Get(ClientError),
+}
+
+// -----------------------------------------------------------------------------
 // Helpers functions
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the person logged in
-pub async fn get(client: &Client) -> Result<Myself, ClientError> {
+pub async fn get(client: &Client) -> Result<Myself, Error> {
     let path = format!("{}/v2/self", client.endpoint);
 
     #[cfg(feature = "logging")]
@@ -63,5 +77,5 @@ pub async fn get(client: &Client) -> Result<Myself, ClientError> {
         );
     }
 
-    client.get(&path).await
+    client.get(&path).await.map_err(Error::Get)
 }

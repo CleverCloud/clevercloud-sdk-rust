@@ -6,7 +6,6 @@
 use std::{
     collections::BTreeMap,
     convert::TryFrom,
-    error::Error,
     fmt::{self, Debug, Display, Formatter},
     hash::Hash,
     str::FromStr,
@@ -72,6 +71,15 @@ where
 }
 
 // -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to parse addon provider identifier {0}, available options are 'addon-pulsar', 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'")]
+    Parse(String),
+}
+
+// -----------------------------------------------------------------------------
 // AddonProviderName structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
@@ -86,7 +94,7 @@ pub enum AddonProviderId {
 }
 
 impl FromStr for AddonProviderId {
-    type Err = Box<dyn Error + Send + Sync>;
+    type Err = Error;
 
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -96,15 +104,13 @@ impl FromStr for AddonProviderId {
             "postgresql-addon" => Self::PostgreSql,
             "mongodb-addon" => Self::MongoDb,
             "addon-pulsar" => Self::Pulsar,
-            _ => {
-                return Err(format!("failed to parse addon provider identifier {}, available options are 'addon-pulsar', 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'", s).into())
-            }
+            _ => return Err(Error::Parse(s.to_owned())),
         })
     }
 }
 
 impl TryFrom<String> for AddonProviderId {
-    type Error = Box<dyn Error + Send + Sync>;
+    type Error = Error;
 
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn try_from(s: String) -> Result<Self, Self::Error> {

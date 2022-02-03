@@ -37,11 +37,20 @@ pub struct Zone {
 }
 
 // -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to list available zones, {0}")]
+    List(ClientError),
+}
+
+// -----------------------------------------------------------------------------
 // List zones
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the list of plan for the postgresql addon provider
-pub async fn list(client: &Client) -> Result<Vec<Zone>, ClientError> {
+pub async fn list(client: &Client) -> Result<Vec<Zone>, Error> {
     let path = format!("{}/v4/products/zones", client.endpoint);
 
     #[cfg(feature = "logging")]
@@ -49,5 +58,5 @@ pub async fn list(client: &Client) -> Result<Vec<Zone>, ClientError> {
         debug!("execute a request to list zones, path: '{}'", &path);
     }
 
-    client.get(&path).await
+    client.get(&path).await.map_err(Error::List)
 }

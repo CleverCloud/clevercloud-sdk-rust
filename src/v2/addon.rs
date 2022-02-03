@@ -1,3 +1,8 @@
+//! # Addon module
+//!
+//! This module expose structures and helpers to interact with the addon api
+//! version 2
+
 use std::collections::BTreeMap;
 
 #[cfg(feature = "logging")]
@@ -152,11 +157,28 @@ pub struct EnvironmentVariable {
 }
 
 // -----------------------------------------------------------------------------
+// Error enumerations
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to list addons of organisation '{0}', {1}")]
+    List(String, ClientError),
+    #[error("failed to get addon '{0}' of organisation '{1}', {2}")]
+    Get(String, String, ClientError),
+    #[error("failed to get addon '{0}' environment of organisation '{1}', {2}")]
+    GetEnvironment(String, String, ClientError),
+    #[error("failed to create addon for organisation '{0}', {1}")]
+    Create(String, ClientError),
+    #[error("failed to delete addon '{0}' for organisation '{1}', {2}")]
+    Delete(String, String, ClientError),
+}
+
+// -----------------------------------------------------------------------------
 // Helpers functions
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the list of addons for the given organisation
-pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, ClientError> {
+pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons",
         client.endpoint, organisation_id,
@@ -170,12 +192,15 @@ pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, 
         );
     }
 
-    client.get(&path).await
+    client
+        .get(&path)
+        .await
+        .map_err(|err| Error::List(organisation_id.to_owned(), err))
 }
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the addon for the given the organisation and identifier
-pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Addon, ClientError> {
+pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Addon, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons/{}",
         client.endpoint, organisation_id, id
@@ -186,7 +211,10 @@ pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Add
         debug!("execute a request to get information about an addon, path: '{}', organisation: '{}', id: '{}'", &path, organisation_id, id);
     }
 
-    client.get(&path).await
+    client
+        .get(&path)
+        .await
+        .map_err(|err| Error::Get(id.to_owned(), organisation_id.to_owned(), err))
 }
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
@@ -195,7 +223,7 @@ pub async fn create(
     client: &Client,
     organisation_id: &str,
     opts: &CreateAddonOpts,
-) -> Result<Addon, ClientError> {
+) -> Result<Addon, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons",
         client.endpoint, organisation_id
@@ -206,12 +234,15 @@ pub async fn create(
         debug!("execute a request to create an addon, path: '{}', organisation: '{}', name: '{}', region: '{}', plan: '{}', provider-id: '{}'", &path, organisation_id, &opts.name, &opts.region, &opts.plan, &opts.provider_id.to_string());
     }
 
-    client.post(&path, opts).await
+    client
+        .post(&path, opts)
+        .await
+        .map_err(|err| Error::Create(organisation_id.to_owned(), err))
 }
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// delete the given addon
-pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<(), ClientError> {
+pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<(), Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons/{}",
         client.endpoint, organisation_id, id
@@ -225,7 +256,10 @@ pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<
         );
     }
 
-    client.delete(&path).await
+    client
+        .delete(&path)
+        .await
+        .map_err(|err| Error::Delete(id.to_owned(), organisation_id.to_owned(), err))
 }
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
@@ -234,7 +268,7 @@ pub async fn environment(
     client: &Client,
     organisation_id: &str,
     id: &str,
-) -> Result<BTreeMap<String, String>, ClientError> {
+) -> Result<BTreeMap<String, String>, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons/{}/env",
         client.endpoint, organisation_id, id
@@ -248,7 +282,11 @@ pub async fn environment(
         );
     }
 
-    let env: Vec<EnvironmentVariable> = client.get(&path).await?;
+    let env: Vec<EnvironmentVariable> = client
+        .get(&path)
+        .await
+        .map_err(|err| Error::GetEnvironment(id.to_owned(), organisation_id.to_owned(), err))?;
+
     Ok(env.iter().fold(BTreeMap::new(), |mut acc, var| {
         acc.insert(var.name.to_owned(), var.value.to_owned());
         acc

@@ -5,7 +5,6 @@
 
 use std::{
     convert::TryFrom,
-    error::Error,
     fmt::{self, Display, Formatter},
     str::FromStr,
 };
@@ -23,6 +22,17 @@ use crate::{
 };
 
 // -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to parse version from '{0}', available versions are 5.7 and 8.0")]
+    ParseVersion(String),
+    #[error("failed to get information about addon provider '{0}', {1}")]
+    Get(AddonProviderId, ClientError),
+}
+
+// -----------------------------------------------------------------------------
 // Version enum
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchemaRepr))]
@@ -35,25 +45,21 @@ pub enum Version {
 }
 
 impl FromStr for Version {
-    type Err = Box<dyn Error + Send + Sync>;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "5.7" => Self::V5dot7,
             "8.0" => Self::V8dot0,
             _ => {
-                return Err(format!(
-                    "failed to parse version from {}, available versions are 5.7 and 8.0",
-                    s
-                )
-                .into());
+                return Err(Error::ParseVersion(s.to_owned()));
             }
         })
     }
 }
 
 impl TryFrom<String> for Version {
-    type Error = Box<dyn Error + Send + Sync>;
+    type Error = Error;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(&s)
@@ -79,9 +85,9 @@ impl Display for Version {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the mysql addon provider
-pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError> {
+#[cfg_attr(feature = "trace", tracing::instrument)]
+pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,
@@ -90,8 +96,11 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, ClientError>
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about the mysql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MySql.to_string());
+        debug!("execute a request to get information about the mysql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MySql);
     }
 
-    client.get(&path).await
+    client
+        .get(&path)
+        .await
+        .map_err(|err| Error::Get(AddonProviderId::MySql, err))
 }
