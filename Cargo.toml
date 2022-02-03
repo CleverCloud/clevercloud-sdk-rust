@@ -34,6 +34,7 @@ serde = { version = "^1.0.136", features = ["derive"] }
 serde_repr = "^0.1.7"
 tracing = { version = "^0.1.29", optional = true }
 tracing-futures = { version = "^0.2.5", optional = true }
+uuid = { version = "^0.8.2", features = ["serde", "v4"] }
 
 [features]
 default = ["logging"]

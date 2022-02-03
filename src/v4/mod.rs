@@ -3,3 +3,4 @@
 //! This module expose resources under the version 4 of the Clever-Cloud Api.
 
 pub mod addon_provider;
+pub mod products;

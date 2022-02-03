@@ -17,6 +17,7 @@ use crate::cfg::Configuration;
 
 pub mod addon;
 pub mod myself;
+pub mod zone;
 
 // -----------------------------------------------------------------------------
 
@@ -92,6 +93,9 @@ pub enum Command {
     /// Interact with addons
     #[structopt(name = "addon", aliases = &["addo", "add", "ad", "a"])]
     Addon(addon::Addon),
+    /// Interact with zones
+    #[structopt(name = "zone", aliases = &["zon", "zo", "z"])]
+    Zone(zone::Zone),
 }
 
 #[async_trait::async_trait]
@@ -105,6 +109,10 @@ impl Executor for Command {
                 .await
                 .map_err(|err| format!("faild to execute current user command, {}", err).into()),
             Self::Addon(cmd) => cmd
+                .execute(config)
+                .await
+                .map_err(|err| format!("faild to execute addon command, {}", err).into()),
+            Self::Zone(cmd) => cmd
                 .execute(config)
                 .await
                 .map_err(|err| format!("faild to execute addon command, {}", err).into()),
