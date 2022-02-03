@@ -3,7 +3,7 @@
 //! Clever Cloud command line interface using the
 //! [clevercloud-sdk-rust](https://github.com/CleverCloud/clevercloud-sdk-rust)
 //! project
-use std::{error::Error, sync::Arc};
+use std::sync::Arc;
 
 use slog::{o, Drain, Level, LevelFilter, Logger};
 use slog_async::Async;
@@ -18,6 +18,9 @@ use crate::{
 pub mod cfg;
 pub mod cmd;
 
+// -----------------------------------------------------------------------------
+// helpers
+
 pub fn initialize(verbosity: &usize) -> Guard {
     let level = Level::from_usize(Level::Critical.as_usize() + verbosity).unwrap_or(Level::Trace);
 
@@ -29,22 +32,35 @@ pub fn initialize(verbosity: &usize) -> Guard {
     set_global_logger(Logger::root(drain, o!()))
 }
 
+// -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to load configuration, {0}")]
+    Configuration(cfg::Error),
+    #[error("failed to execute command, {0}")]
+    Command(cmd::Error),
+    #[error("failed to parse command line, {0}")]
+    ParseCommandLine(std::io::Error),
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Self::ParseCommandLine(err)
+    }
+}
+
+// -----------------------------------------------------------------------------
+// main
+
 #[paw::main]
 #[tokio::main]
-pub async fn main(args: Args) -> Result<(), Box<dyn Error + Send + Sync>> {
+pub async fn main(args: Args) -> Result<(), Error> {
     let _guard = initialize(&args.verbosity);
-    let result: Result<_, Box<dyn Error + Send + Sync>> = match &args.config {
-        Some(pb) => Configuration::try_from(pb).map_err(|err| {
-            format!(
-                "failed to load configuration from path {}, {}",
-                pb.display(),
-                err
-            )
-            .into()
-        }),
-        None => Configuration::try_default().map_err(|err| {
-            format!("failed to load configuration from defaults paths, {}", err).into()
-        }),
+    let result = match &args.config {
+        Some(pb) => Configuration::try_from(pb).map_err(Error::Configuration),
+        None => Configuration::try_default().map_err(Error::Configuration),
     };
 
     let config = match result {
@@ -61,7 +77,7 @@ pub async fn main(args: Args) -> Result<(), Box<dyn Error + Send + Sync>> {
         return Ok(());
     }
 
-    if let Err(err) = args.cmd.execute(config).await {
+    if let Err(err) = args.cmd.execute(config).await.map_err(Error::Command) {
         crit!("Could not execute command"; "error" => err.to_string());
         return Err(err);
     }

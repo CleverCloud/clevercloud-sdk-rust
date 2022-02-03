@@ -1,19 +1,33 @@
 //! # Zone module
 //!
 //! This module provides command implementation related to the zone API
-use std::{error::Error, sync::Arc};
+use std::sync::Arc;
 
 use clevercloud_sdk::{oauth10a::Credentials, v4::products::zones, Client};
 use structopt::StructOpt;
 
 use crate::{
     cfg::Configuration,
-    cmd::{format, Executor, Output},
+    cmd::{self, Executor, Output},
 };
 
-/// Zone enum contains all operations that could be achieved on the zone API
+// -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to format output, {0}")]
+    FormatOutput(Box<cmd::Error>),
+    #[error("failed to list available zones, {0}")]
+    List(zones::Error),
+}
+
+// -----------------------------------------------------------------------------
+// Command enumeration
+
+/// Command enum contains all operations that could be achieved on the zone API
 #[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
-pub enum Zone {
+pub enum Command {
     /// List available zones
     #[structopt(name = "list", aliases = &["l"])]
     List {
@@ -24,35 +38,30 @@ pub enum Zone {
 }
 
 #[async_trait::async_trait]
-impl Executor for Zone {
-    type Error = Box<dyn Error + Send + Sync>;
+impl Executor for Command {
+    type Error = Error;
 
     async fn execute(&self, config: Arc<Configuration>) -> Result<(), Self::Error> {
         match self {
-            Self::List { output } => list(config, output)
-                .await
-                .map_err(|err| format!("failed to list available zones, {}", err).into()),
+            Self::List { output } => list(config, output).await,
         }
     }
 }
 
-pub async fn list(
-    config: Arc<Configuration>,
-    output: &Output,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
+// -----------------------------------------------------------------------------
+// helpers
+
+pub async fn list(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
     let client = Client::from(credentials);
 
-    let zones = zones::list(&client).await.map_err(|err| {
-        format!(
-            "failed to list available zones information from Clever Cloud's api, {}",
-            err
-        )
-    })?;
+    let zones = zones::list(&client).await.map_err(Error::List)?;
 
-    let out = format(output, &zones)
-        .map_err(|err| format!("failed to format current user information, {}", err))?;
-
-    println!("{}", out);
+    println!(
+        "{}",
+        output
+            .format(&zones)
+            .map_err(|err| Error::FormatOutput(Box::new(err)))?
+    );
     Ok(())
 }

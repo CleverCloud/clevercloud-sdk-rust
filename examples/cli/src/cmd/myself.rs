@@ -1,19 +1,33 @@
 //! # Myself module
 //!
 //! This module provides command implementation related to the current user
-use std::{error::Error, sync::Arc};
+use std::sync::Arc;
 
 use clevercloud_sdk::{oauth10a::Credentials, v2::myself, Client};
 use structopt::StructOpt;
 
 use crate::{
     cfg::Configuration,
-    cmd::{format, Executor, Output},
+    cmd::{self, Executor, Output},
 };
 
-/// Myself enum contains all operations that could be achieved on the user
+// -----------------------------------------------------------------------------
+// Error enumeration
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("failed to format output, {0}")]
+    FormatOutput(Box<cmd::Error>),
+    #[error("failed to get current user information, {0}")]
+    Get(myself::Error),
+}
+
+// -----------------------------------------------------------------------------
+// Command enumeration
+
+/// Command enum contains all operations that could be achieved on the user
 #[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
-pub enum Myself {
+pub enum Command {
     /// Get information about the current user
     #[structopt(name = "get", aliases = &["ge", "g"])]
     Get {
@@ -24,35 +38,27 @@ pub enum Myself {
 }
 
 #[async_trait::async_trait]
-impl Executor for Myself {
-    type Error = Box<dyn Error + Send + Sync>;
+impl Executor for Command {
+    type Error = Error;
 
     async fn execute(&self, config: Arc<Configuration>) -> Result<(), Self::Error> {
         match self {
-            Self::Get { output } => get(config, output)
-                .await
-                .map_err(|err| format!("failed to get current user information, {}", err).into()),
+            Self::Get { output } => get(config, output).await,
         }
     }
 }
 
-pub async fn get(
-    config: Arc<Configuration>,
-    output: &Output,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
+pub async fn get(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
     let client = Client::from(credentials);
 
-    let user = myself::get(&client).await.map_err(|err| {
-        format!(
-            "failed to get current user information from Clever Cloud's api, {}",
-            err
-        )
-    })?;
+    let user = myself::get(&client).await.map_err(Error::Get)?;
 
-    let out = format(output, &user)
-        .map_err(|err| format!("failed to format current user information, {}", err))?;
-
-    println!("{}", out);
+    println!(
+        "{}",
+        output
+            .format(&user)
+            .map_err(|err| Error::FormatOutput(Box::new(err)))?
+    );
     Ok(())
 }
