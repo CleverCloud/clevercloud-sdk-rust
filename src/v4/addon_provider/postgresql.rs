@@ -40,6 +40,7 @@ pub enum Error {
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
+    V14 = 14,
     V13 = 13,
     V12 = 12,
     V11 = 11,
@@ -52,6 +53,7 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
+            "14" => Self::V14,
             "13" => Self::V13,
             "12" => Self::V12,
             "11" => Self::V11,
@@ -82,6 +84,7 @@ impl Into<String> for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
+            Self::V14 => write!(f, "14"),
             Self::V13 => write!(f, "13"),
             Self::V12 => write!(f, "12"),
             Self::V11 => write!(f, "11"),
