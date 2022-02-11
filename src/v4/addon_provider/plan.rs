@@ -3,6 +3,9 @@
 //! This module provide helpers and structures to interact with the plan api of
 //! the postgresql addon provider
 
+use std::fmt::Debug;
+
+use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -86,11 +89,14 @@ pub enum Error {
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the list of plan for the postgresql addon provider
-pub async fn list(
-    client: &Client,
+pub async fn list<C>(
+    client: &Client<C>,
     addon_provider_id: &AddonProviderId,
     organisation_id: &str,
-) -> Result<AddonProviderPlan, Error> {
+) -> Result<AddonProviderPlan, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v2/products/addonproviders/{}?orga_id={}",
         client.endpoint, addon_provider_id, organisation_id
@@ -116,12 +122,15 @@ pub async fn list(
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// list plans for the organisation and try to find one matching the pattern
 /// returns the plan if found
-pub async fn find(
-    client: &Client,
+pub async fn find<C>(
+    client: &Client<C>,
     addon_provider_id: &AddonProviderId,
     organisation_id: &str,
     pattern: &str,
-) -> Result<Option<Plan>, Error> {
+) -> Result<Option<Plan>, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     Ok(list(client, addon_provider_id, organisation_id)
         .await?
         .plans

@@ -3,7 +3,14 @@
 //! This module provides command implementation related to the zone API
 use std::sync::Arc;
 
-use clevercloud_sdk::{oauth10a::Credentials, v4::products::zones, Client};
+use clevercloud_sdk::{
+    oauth10a::{
+        proxy::{self, ProxyConnectorBuilder},
+        Credentials,
+    },
+    v4::products::zones,
+    Client,
+};
 use structopt::StructOpt;
 
 use crate::{
@@ -20,6 +27,8 @@ pub enum Error {
     FormatOutput(Box<cmd::Error>),
     #[error("failed to list available zones, {0}")]
     List(zones::Error),
+    #[error("failed to build proxy connector, {0}")]
+    ProxyConnector(proxy::Error),
 }
 
 // -----------------------------------------------------------------------------
@@ -69,7 +78,10 @@ impl Executor for Command {
 
 pub async fn list(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
-    let client = Client::from(credentials);
+    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
+    let client = Client::builder()
+        .with_credentials(credentials)
+        .build(connector);
 
     let zones = zones::list(&client).await.map_err(Error::List)?;
 
@@ -84,7 +96,10 @@ pub async fn list(config: Arc<Configuration>, output: &Output) -> Result<(), Err
 
 pub async fn applications(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
-    let client = Client::from(credentials);
+    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
+    let client = Client::builder()
+        .with_credentials(credentials)
+        .build(connector);
 
     let zones = zones::applications(&client).await.map_err(Error::List)?;
 
@@ -99,7 +114,10 @@ pub async fn applications(config: Arc<Configuration>, output: &Output) -> Result
 
 pub async fn hds(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
-    let client = Client::from(credentials);
+    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
+    let client = Client::builder()
+        .with_credentials(credentials)
+        .build(connector);
 
     let zones = zones::hds(&client).await.map_err(Error::List)?;
 

@@ -3,8 +3,9 @@
 //! This module expose structures and helpers to interact with the addon api
 //! version 2
 
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt::Debug};
 
+use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -178,7 +179,10 @@ pub enum Error {
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the list of addons for the given organisation
-pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, Error> {
+pub async fn list<C>(client: &Client<C>, organisation_id: &str) -> Result<Vec<Addon>, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v2/organisations/{}/addons",
         client.endpoint, organisation_id,
@@ -200,7 +204,10 @@ pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, 
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns the addon for the given the organisation and identifier
-pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Addon, Error> {
+pub async fn get<C>(client: &Client<C>, organisation_id: &str, id: &str) -> Result<Addon, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v2/organisations/{}/addons/{}",
         client.endpoint, organisation_id, id
@@ -219,11 +226,14 @@ pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Add
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// create the addon and returns it
-pub async fn create(
-    client: &Client,
+pub async fn create<C>(
+    client: &Client<C>,
     organisation_id: &str,
     opts: &CreateAddonOpts,
-) -> Result<Addon, Error> {
+) -> Result<Addon, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v2/organisations/{}/addons",
         client.endpoint, organisation_id
@@ -242,7 +252,10 @@ pub async fn create(
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// delete the given addon
-pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<(), Error> {
+pub async fn delete<C>(client: &Client<C>, organisation_id: &str, id: &str) -> Result<(), Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v2/organisations/{}/addons/{}",
         client.endpoint, organisation_id, id
@@ -264,11 +277,14 @@ pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns environment variables for an addon
-pub async fn environment(
-    client: &Client,
+pub async fn environment<C>(
+    client: &Client<C>,
     organisation_id: &str,
     id: &str,
-) -> Result<BTreeMap<String, String>, Error> {
+) -> Result<BTreeMap<String, String>, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v2/organisations/{}/addons/{}/env",
         client.endpoint, organisation_id, id
