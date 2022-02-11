@@ -3,7 +3,7 @@
 //! This module provide a client and structures to interact with clever-cloud
 //! api.
 
-use std::fmt::Debug;
+use std::{fmt::Debug, marker::PhantomData};
 
 pub use oauth10a::client as oauth10a;
 
@@ -11,7 +11,10 @@ use async_trait::async_trait;
 use hyper::Method;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::oauth10a::{ClientError, Credentials, Request, RestClient};
+use crate::oauth10a::{
+    connector::{Connect, GaiResolver, HttpConnector, HttpsConnector},
+    ClientError, Credentials, Request, RestClient,
+};
 
 pub mod v2;
 pub mod v4;
@@ -22,16 +25,75 @@ pub mod v4;
 pub const PUBLIC_ENDPOINT: &str = "https://api.clever-cloud.com";
 
 // -----------------------------------------------------------------------------
-// Client structures
+// Builder structure
 
 #[derive(Clone, Debug)]
-pub struct Client {
-    pub inner: oauth10a::Client,
-    pub endpoint: String,
+pub struct Builder<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
+    endpoint: Option<String>,
+    credentials: Option<Credentials>,
+    phantom: PhantomData<C>,
+}
+
+impl<C> Default for Builder<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        Self {
+            endpoint: None,
+            credentials: None,
+            phantom: PhantomData::default(),
+        }
+    }
+}
+
+impl<C> Builder<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    pub fn with_endpoint(mut self, endpoint: String) -> Self {
+        self.endpoint = Some(endpoint);
+        self
+    }
+
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    pub fn with_credentials(mut self, credentials: Credentials) -> Self {
+        self.credentials = Some(credentials);
+        self
+    }
+
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    pub fn build(self, connector: C) -> Client<C> {
+        let endpoint = match self.endpoint {
+            Some(endpoint) => endpoint,
+            None => PUBLIC_ENDPOINT.to_string(),
+        };
+
+        Client::<C>::new(connector, endpoint, self.credentials)
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Client structure
+
+#[derive(Clone, Debug)]
+pub struct Client<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
+    inner: oauth10a::Client<C>,
+    endpoint: String,
 }
 
 #[async_trait]
-impl Request for Client {
+impl<C> Request for Client<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     type Error = ClientError;
 
     #[cfg_attr(feature = "trace", tracing::instrument)]
@@ -50,7 +112,10 @@ impl Request for Client {
 }
 
 #[async_trait]
-impl RestClient for Client {
+impl<C> RestClient for Client<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     type Error = ClientError;
 
     #[cfg_attr(feature = "trace", tracing::instrument)]
@@ -94,32 +159,52 @@ impl RestClient for Client {
     }
 }
 
-impl From<Credentials> for Client {
+impl<C> From<C> for Client<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    fn from(connector: C) -> Self {
+        Self::builder().build(connector)
+    }
+}
+
+impl From<Credentials> for Client<HttpsConnector<HttpConnector<GaiResolver>>> {
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from(credentials: Credentials) -> Self {
-        Self {
-            inner: oauth10a::Client::from(credentials),
-            ..Default::default()
-        }
+        Self::builder()
+            .with_credentials(credentials)
+            .build(HttpsConnector::new())
     }
 }
 
-impl Default for Client {
+impl Default for Client<HttpsConnector<HttpConnector<GaiResolver>>> {
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn default() -> Self {
-        Self {
-            inner: oauth10a::Client::default(),
-            endpoint: PUBLIC_ENDPOINT.to_string(),
-        }
+        Self::builder().build(HttpsConnector::new())
     }
 }
 
-impl Client {
+impl<C> Client<C>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     #[cfg_attr(feature = "trace", tracing::instrument)]
-    pub fn new(endpoint: String, credentials: Option<Credentials>) -> Self {
-        let mut inner = oauth10a::Client::default();
-        inner.set_credentials(credentials);
-        Self { inner, endpoint }
+    pub fn new(connector: C, endpoint: String, credentials: Option<Credentials>) -> Self {
+        Self {
+            inner: oauth10a::Client::<C>::new(connector, credentials),
+            endpoint,
+        }
+    }
+
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    pub fn builder() -> Builder<C> {
+        Builder::<C>::default()
+    }
+
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    pub fn set_endpoint(&mut self, endpoint: String) {
+        self.endpoint = endpoint;
     }
 
     #[cfg_attr(feature = "trace", tracing::instrument)]

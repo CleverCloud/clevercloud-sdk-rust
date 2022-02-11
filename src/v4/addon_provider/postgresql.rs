@@ -5,10 +5,11 @@
 
 use std::{
     convert::TryFrom,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Debug, Display, Formatter},
     str::FromStr,
 };
 
+use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -99,7 +100,10 @@ impl Display for Version {
 
 #[cfg_attr(feature = "trace", tracing::instrument)]
 /// returns information about the postgresql addon provider
-pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
+pub async fn get<C>(client: &Client<C>) -> Result<AddonProvider<Version>, Error>
+where
+    C: Connect + Clone + Debug + Send + Sync + 'static,
+{
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,
