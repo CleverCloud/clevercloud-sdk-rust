@@ -3,7 +3,14 @@
 //! This module provides command implementation related to addons
 use std::sync::Arc;
 
-use clevercloud_sdk::{oauth10a::Credentials, v2::addon, Client};
+use clevercloud_sdk::{
+    oauth10a::{
+        proxy::{self, ProxyConnectorBuilder},
+        Credentials,
+    },
+    v2::addon,
+    Client,
+};
 use structopt::StructOpt;
 
 use crate::{
@@ -22,6 +29,8 @@ pub enum Error {
     List(String, addon::Error),
     #[error("failed to get addon '{0}' of organisation '{1}', {2}")]
     Get(String, String, addon::Error),
+    #[error("failed to build proxy connector, {0}")]
+    ProxyConnector(proxy::Error),
 }
 
 // -----------------------------------------------------------------------------
@@ -80,7 +89,10 @@ pub async fn list(
     organisation_id: &str,
 ) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
-    let client = Client::from(credentials);
+    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
+    let client = Client::builder()
+        .with_credentials(credentials)
+        .build(connector);
 
     let addons = addon::list(&client, organisation_id)
         .await
@@ -102,7 +114,10 @@ pub async fn get(
     addon_id: &str,
 ) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
-    let client = Client::from(credentials);
+    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
+    let client = Client::builder()
+        .with_credentials(credentials)
+        .build(connector);
 
     let addons = addon::get(&client, organisation_id, addon_id)
         .await

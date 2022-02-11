@@ -3,7 +3,14 @@
 //! This module provides command implementation related to the current user
 use std::sync::Arc;
 
-use clevercloud_sdk::{oauth10a::Credentials, v2::myself, Client};
+use clevercloud_sdk::{
+    oauth10a::{
+        proxy::{self, ProxyConnectorBuilder},
+        Credentials,
+    },
+    v2::myself,
+    Client,
+};
 use structopt::StructOpt;
 
 use crate::{
@@ -20,6 +27,8 @@ pub enum Error {
     FormatOutput(Box<cmd::Error>),
     #[error("failed to get current user information, {0}")]
     Get(myself::Error),
+    #[error("failed to build proxy connector, {0}")]
+    ProxyConnector(proxy::Error),
 }
 
 // -----------------------------------------------------------------------------
@@ -50,7 +59,10 @@ impl Executor for Command {
 
 pub async fn get(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
     let credentials: Credentials = config.credentials.to_owned().into();
-    let client = Client::from(credentials);
+    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
+    let client = Client::builder()
+        .with_credentials(credentials)
+        .build(connector);
 
     let user = myself::get(&client).await.map_err(Error::Get)?;
 
@@ -60,5 +72,6 @@ pub async fn get(config: Arc<Configuration>, output: &Output) -> Result<(), Erro
             .format(&user)
             .map_err(|err| Error::FormatOutput(Box::new(err)))?
     );
+
     Ok(())
 }
