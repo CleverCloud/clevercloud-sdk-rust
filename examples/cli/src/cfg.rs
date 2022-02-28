@@ -61,19 +61,17 @@ impl TryFrom<&PathBuf> for Configuration {
     type Error = Error;
 
     fn try_from(pb: &PathBuf) -> Result<Self, Self::Error> {
-        let mut config = Config::new();
-
-        config
-            .merge(File::from(pb.as_path()).required(true))
-            .map_err(|err| Error::LoadConfiguration(pb.display().to_string(), err))?;
-
-        config.try_into().map_err(Error::Cast)
+        Config::builder()
+            .add_source(File::from(pb.as_path()).required(true))
+            .build()
+            .map_err(|err| Error::LoadConfiguration(pb.display(), err))?
+            .try_deserialize()
+            .map_err(Error::Cast)
     }
 }
 
 impl Configuration {
     pub fn try_default() -> Result<Self, Error> {
-        let mut config = Config::new();
         let paths = vec![
             format!("/usr/share/{}/config", env!("CARGO_PKG_NAME")),
             format!("/etc/{}/config", env!("CARGO_PKG_NAME")),
@@ -91,16 +89,17 @@ impl Configuration {
             "config".to_string(),
         ];
 
-        config
-            .merge(
+        Config::builder()
+            .addsource(
                 paths
                     .iter()
                     .map(PathBuf::from)
                     .map(|path| File::from(path).required(false))
                     .collect::<Vec<_>>(),
             )
-            .map_err(Error::LoadDefaultConfiguration)?;
-
-        config.try_into().map_err(Error::Cast)
+            .build()
+            .map_err(Error::LoadDefaultConfiguration)?
+            .try_deserialize()
+            .map_err(Error::Cast)
     }
 }
