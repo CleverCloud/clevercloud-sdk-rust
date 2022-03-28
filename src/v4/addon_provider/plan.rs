@@ -16,6 +16,12 @@ use serde::{Deserialize, Serialize};
 use crate::{v2::addon::Feature, v4::addon_provider::AddonProviderId, Client};
 
 // -----------------------------------------------------------------------------
+// Constants
+
+/// Config Provider addon have an unique and hard-coded plan as it is free to use
+pub const CONFIG_PROVIDER: &str = "plan_5d8e9596-dd73-4b73-84d9-e165372c5324";
+
+// -----------------------------------------------------------------------------
 // Plan structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
