@@ -41,7 +41,6 @@ pub enum Error {
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
-    V6dot0dot10 = 6010,
     V6dot2dot6 = 626,
 }
 
@@ -51,7 +50,6 @@ impl FromStr for Version {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "6.2.6" => Self::V6dot2dot6,
-            "6.0.10" => Self::V6dot0dot10,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -78,7 +76,6 @@ impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::V6dot2dot6 => write!(f, "6.2.6"),
-            Self::V6dot0dot10 => write!(f, "6.0.10"),
         }
     }
 }
