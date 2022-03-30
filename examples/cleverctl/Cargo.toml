@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "cleverctl"
 description = "A command line interface that use the clevercloud-sdk"
 version = "0.1.0"
 edition = "2021"
