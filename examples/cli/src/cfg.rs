@@ -64,7 +64,7 @@ impl TryFrom<&PathBuf> for Configuration {
         Config::builder()
             .add_source(File::from(pb.as_path()).required(true))
             .build()
-            .map_err(|err| Error::LoadConfiguration(pb.display(), err))?
+            .map_err(|err| Error::LoadConfiguration(pb.display().to_string(), err))?
             .try_deserialize()
             .map_err(Error::Cast)
     }
@@ -90,7 +90,7 @@ impl Configuration {
         ];
 
         Config::builder()
-            .addsource(
+            .add_source(
                 paths
                     .iter()
                     .map(PathBuf::from)
