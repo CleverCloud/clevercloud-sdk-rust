@@ -15,6 +15,7 @@ use std::{
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub mod config_provider;
 pub mod mongodb;
 pub mod mysql;
 pub mod plan;
@@ -91,7 +92,7 @@ pub enum AddonProviderId {
     MySql,
     MongoDb,
     Pulsar,
-    Config,
+    ConfigProvider,
 }
 
 impl FromStr for AddonProviderId {
@@ -105,7 +106,7 @@ impl FromStr for AddonProviderId {
             "postgresql-addon" => Self::PostgreSql,
             "mongodb-addon" => Self::MongoDb,
             "addon-pulsar" => Self::Pulsar,
-            "config-provider" => Self::Config,
+            "config-provider" => Self::ConfigProvider,
             _ => return Err(Error::Parse(s.to_owned())),
         })
     }
@@ -136,7 +137,7 @@ impl Display for AddonProviderId {
             Self::MySql => write!(f, "mysql-addon"),
             Self::MongoDb => write!(f, "mongodb-addon"),
             Self::Pulsar => write!(f, "addon-pulsar"),
-            Self::Config => write!(f, "config-provider"),
+            Self::ConfigProvider => write!(f, "config-provider"),
         }
     }
 }
