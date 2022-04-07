@@ -15,8 +15,10 @@ use structopt::StructOpt;
 
 use crate::{
     cfg::Configuration,
-    cmd::{self, Executor, Output},
+    cmd::{self, addon::config_provider::ConfigProvider, Executor, Output},
 };
+
+pub mod config_provider;
 
 // -----------------------------------------------------------------------------
 // Error enumeration
@@ -31,6 +33,8 @@ pub enum Error {
     Get(String, String, addon::Error),
     #[error("failed to build proxy connector, {0}")]
     ProxyConnector(proxy::Error),
+    #[error("failed to execute command on config-provider addon, {0}")]
+    ConfigProvider(config_provider::Error),
 }
 
 // -----------------------------------------------------------------------------
@@ -39,6 +43,7 @@ pub enum Error {
 #[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
     /// List addons of an organisation
+    #[structopt(name = "list")]
     List {
         /// Specify the output format
         #[structopt(short = "o", long = "output", default_value)]
@@ -48,6 +53,7 @@ pub enum Command {
         organisation_id: String,
     },
     /// Get addon of an organisation
+    #[structopt(name = "get")]
     Get {
         /// Specify the output format
         #[structopt(short = "o", long = "output", default_value)]
@@ -59,6 +65,9 @@ pub enum Command {
         #[structopt(name = "addon-identifier")]
         addon_id: String,
     },
+    /// Interact with ConfigProvider addon
+    #[structopt(name = "config-provider", aliases = &["cp"])]
+    ConfigProvider(ConfigProvider),
 }
 
 #[async_trait::async_trait]
@@ -76,6 +85,7 @@ impl Executor for Command {
                 organisation_id,
                 addon_id,
             } => get(config, output, organisation_id, addon_id).await,
+            Self::ConfigProvider(cmd) => cmd.execute(config).await.map_err(Error::ConfigProvider),
         }
     }
 }
