@@ -125,6 +125,8 @@ pub struct Opts {
     pub version: Option<String>,
     #[serde(rename = "encryption", skip_serializing_if = "Option::is_none")]
     pub encryption: Option<String>,
+    #[serde(rename = "services", skip_serializing_if = "Option::is_none")]
+    pub services: Option<String>,
 }
 
 // -----------------------------------------------------------------------------
