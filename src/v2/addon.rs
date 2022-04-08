@@ -13,7 +13,7 @@ use oauth10a::client::{ClientError, RestClient};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Client;
+use crate::{v4::addon_provider::config_provider::addon::environment::Variable, Client};
 
 // -----------------------------------------------------------------------------
 // Provider structure
@@ -146,18 +146,6 @@ pub struct CreateOpts {
 }
 
 // -----------------------------------------------------------------------------
-// EnvironmentVariable struct
-
-#[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
-pub struct EnvironmentVariable {
-    #[serde(rename = "name")]
-    pub name: String,
-    #[serde(rename = "value")]
-    pub value: String,
-}
-
-// -----------------------------------------------------------------------------
 // Error enumerations
 
 #[derive(thiserror::Error, Debug)]
@@ -167,7 +155,7 @@ pub enum Error {
     #[error("failed to get addon '{0}' of organisation '{1}', {2}")]
     Get(String, String, ClientError),
     #[error("failed to get addon '{0}' environment of organisation '{1}', {2}")]
-    GetEnvironment(String, String, ClientError),
+    Environment(String, String, ClientError),
     #[error("failed to create addon for organisation '{0}', {1}")]
     Create(String, ClientError),
     #[error("failed to delete addon '{0}' for organisation '{1}', {2}")]
@@ -298,10 +286,10 @@ where
         );
     }
 
-    let env: Vec<EnvironmentVariable> = client
+    let env: Vec<Variable> = client
         .get(&path)
         .await
-        .map_err(|err| Error::GetEnvironment(id.to_owned(), organisation_id.to_owned(), err))?;
+        .map_err(|err| Error::Environment(id.to_owned(), organisation_id.to_owned(), err))?;
 
     Ok(env.iter().fold(BTreeMap::new(), |mut acc, var| {
         acc.insert(var.name.to_owned(), var.value.to_owned());
