@@ -116,11 +116,11 @@ pub struct Addon {
 }
 
 // -----------------------------------------------------------------------------
-// AddonOpts enum
+// Opts enum
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
 #[derive(Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord, Clone, Debug, Default)]
-pub struct AddonOpts {
+pub struct Opts {
     #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
     #[serde(rename = "encryption", skip_serializing_if = "Option::is_none")]
@@ -128,11 +128,11 @@ pub struct AddonOpts {
 }
 
 // -----------------------------------------------------------------------------
-// CreateAddonOpts structure
+// CreateOpts structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
 #[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
-pub struct CreateAddonOpts {
+pub struct CreateOpts {
     #[serde(rename = "name")]
     pub name: String,
     #[serde(rename = "region")]
@@ -142,7 +142,7 @@ pub struct CreateAddonOpts {
     #[serde(rename = "plan")]
     pub plan: String,
     #[serde(rename = "options")]
-    pub options: AddonOpts,
+    pub options: Opts,
 }
 
 // -----------------------------------------------------------------------------
@@ -229,7 +229,7 @@ where
 pub async fn create<C>(
     client: &Client<C>,
     organisation_id: &str,
-    opts: &CreateAddonOpts,
+    opts: &CreateOpts,
 ) -> Result<Addon, Error>
 where
     C: Connect + Clone + Debug + Send + Sync + 'static,
