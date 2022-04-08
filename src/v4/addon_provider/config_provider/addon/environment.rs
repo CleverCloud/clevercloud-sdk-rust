@@ -9,6 +9,8 @@ use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
+#[cfg(feature = "jsonschemas")]
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::{v4::addon_provider::AddonProviderId, Client};
@@ -16,6 +18,7 @@ use crate::{v4::addon_provider::AddonProviderId, Client};
 // -----------------------------------------------------------------------------
 // Variable structure
 
+#[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
 #[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
 pub struct Variable {
     #[serde(rename = "name")]
