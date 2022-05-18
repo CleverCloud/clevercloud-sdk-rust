@@ -3,6 +3,7 @@
 //! This module provides command implementation related to addons
 use std::sync::Arc;
 
+use clap::Subcommand;
 use clevercloud_sdk::{
     oauth10a::{
         proxy::{self, ProxyConnectorBuilder},
@@ -11,7 +12,6 @@ use clevercloud_sdk::{
     v2::addon,
     Client,
 };
-use structopt::StructOpt;
 
 use crate::{
     cfg::Configuration,
@@ -40,33 +40,33 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Addon enumeration
 
-#[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
+#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
     /// List addons of an organisation
-    #[structopt(name = "list")]
+    #[clap(name = "list")]
     List {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
         /// Specify the organisation identifier
-        #[structopt(name = "organisation-identifier")]
+        #[clap(name = "organisation-identifier")]
         organisation_id: String,
     },
     /// Get addon of an organisation
-    #[structopt(name = "get")]
+    #[clap(name = "get")]
     Get {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
         /// Specify the organisation identifier
-        #[structopt(name = "organisation-identifier")]
+        #[clap(name = "organisation-identifier")]
         organisation_id: String,
         /// Specify the addon identifier
-        #[structopt(name = "addon-identifier")]
+        #[clap(name = "addon-identifier")]
         addon_id: String,
     },
     /// Interact with ConfigProvider addon
-    #[structopt(name = "config-provider", aliases = &["cp"])]
+    #[clap(name = "config-provider", aliases = &["cp"], subcommand)]
     ConfigProvider(ConfigProvider),
 }
 

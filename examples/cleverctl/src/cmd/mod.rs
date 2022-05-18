@@ -9,8 +9,9 @@ use std::{
     sync::Arc,
 };
 
+use clap::{Parser, Subcommand};
 use serde::Serialize;
-use structopt::StructOpt;
+use paw::ParseArgs;
 
 use crate::cfg::Configuration;
 
@@ -100,16 +101,16 @@ pub trait Executor {
 // Command enumeration
 
 /// Command enum contains all operations that the command line could handle
-#[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
+#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
     /// Interact with the current user
-    #[structopt(name = "self", aliases = &["sel", "se", "s"])]
+    #[clap(name = "self", aliases = &["sel", "se", "s"], subcommand)]
     Myself(myself::Command),
     /// Interact with addons
-    #[structopt(name = "addon", aliases = &["addo", "add", "ad", "a"])]
+    #[clap(name = "addon", aliases = &["addo", "add", "ad", "a"], subcommand)]
     Addon(addon::Command),
     /// Interact with zones
-    #[structopt(name = "zone", aliases = &["zon", "zo", "z"])]
+    #[clap(name = "zone", aliases = &["zon", "zo", "z"], subcommand)]
     Zone(zone::Command),
 }
 
@@ -131,17 +132,26 @@ impl Executor for Command {
 
 /// Args structure contains all commands and global flags that the command line
 /// supports
-#[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
+#[derive(Parser, Eq, PartialEq, Clone, Debug)]
+#[clap(author, version, about)]
 pub struct Args {
     /// Specify a configuration file
-    #[structopt(short = "c", long = "config", global = true)]
+    #[clap(short = 'c', long = "config", global = true)]
     pub config: Option<PathBuf>,
     /// Increase log verbosity
-    #[structopt(short = "v", global = true, parse(from_occurrences))]
+    #[clap(short = 'v', global = true, parse(from_occurrences))]
     pub verbosity: usize,
     /// Check the healthiness of the configuration
-    #[structopt(short = "t", long = "check", global = true)]
+    #[clap(short = 't', long = "check", global = true)]
     pub check: bool,
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub cmd: Command,
+}
+
+impl ParseArgs for Args {
+    type Error = Error;
+
+    fn parse_args() -> Result<Self, Self::Error> {
+        Ok(Args::parse())
+    }
 }

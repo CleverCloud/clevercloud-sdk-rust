@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use structopt::StructOpt;
+use clap::Subcommand;
 
 use crate::{
     cfg::Configuration,
@@ -25,10 +25,10 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // ConfigProvider structure
 
-#[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
+#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum ConfigProvider {
     /// Interact with config-provider environment
-    #[structopt(name = "environment", aliases = &["env"])]
+    #[clap(name = "environment", aliases = &["env"], subcommand)]
     Environment(Environment),
 }
 

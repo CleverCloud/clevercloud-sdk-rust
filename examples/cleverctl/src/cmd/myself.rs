@@ -3,6 +3,7 @@
 //! This module provides command implementation related to the current user
 use std::sync::Arc;
 
+use clap::Subcommand;
 use clevercloud_sdk::{
     oauth10a::{
         proxy::{self, ProxyConnectorBuilder},
@@ -11,7 +12,6 @@ use clevercloud_sdk::{
     v2::myself,
     Client,
 };
-use structopt::StructOpt;
 
 use crate::{
     cfg::Configuration,
@@ -35,13 +35,13 @@ pub enum Error {
 // Command enumeration
 
 /// Command enum contains all operations that could be achieved on the user
-#[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
+#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
     /// Get information about the current user
-    #[structopt(name = "get", aliases = &["ge", "g"])]
+    #[clap(name = "get", aliases = &["ge", "g"])]
     Get {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
     },
 }
