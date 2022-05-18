@@ -51,6 +51,12 @@ impl From<std::io::Error> for Error {
     }
 }
 
+impl From<cmd::Error> for Error {
+    fn from(err: cmd::Error) -> Self {
+        Self::Command(err)
+    }
+}
+
 // -----------------------------------------------------------------------------
 // main
 

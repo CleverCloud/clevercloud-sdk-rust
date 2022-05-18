@@ -3,6 +3,7 @@
 //! This module provides command implementation related to the zone API
 use std::sync::Arc;
 
+use clap::Subcommand;
 use clevercloud_sdk::{
     oauth10a::{
         proxy::{self, ProxyConnectorBuilder},
@@ -11,7 +12,6 @@ use clevercloud_sdk::{
     v4::products::zones,
     Client,
 };
-use structopt::StructOpt;
 
 use crate::{
     cfg::Configuration,
@@ -35,27 +35,27 @@ pub enum Error {
 // Command enumeration
 
 /// Command enum contains all operations that could be achieved on the zone API
-#[derive(StructOpt, Eq, PartialEq, Clone, Debug)]
+#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
     /// List available zones
-    #[structopt(name = "list", aliases = &["l"])]
+    #[clap(name = "list", aliases = &["l"])]
     List {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
     },
     /// List application available zones
-    #[structopt(name = "application", aliases = &["app", "a"])]
+    #[clap(name = "application", aliases = &["app", "a"])]
     Application {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
     },
     /// List hds available zones
-    #[structopt(name = "hds", aliases = &["h"])]
+    #[clap(name = "hds", aliases = &["h"])]
     Hds {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
     },
 }

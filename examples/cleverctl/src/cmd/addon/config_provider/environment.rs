@@ -8,7 +8,7 @@ use clevercloud_sdk::{
     v4::addon_provider::config_provider::addon::environment::{self, Variable},
     Client,
 };
-use structopt::StructOpt;
+use clap::Subcommand;
 use tokio::{fs, task::spawn_blocking as blocking};
 
 use crate::{
@@ -40,58 +40,58 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Environment enumeration
 
-#[derive(StructOpt, PartialEq, Eq, Clone, Debug)]
+#[derive(Subcommand, PartialEq, Eq, Clone, Debug)]
 pub enum Environment {
     /// Get environment variables
-    #[structopt(name = "get")]
+    #[clap(name = "get")]
     Get {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
         /// Specify the config-provider identifier
-        #[structopt(name = "config-provider-identifier")]
+        #[clap(name = "config-provider-identifier")]
         id: String,
     },
     /// Insert an environment variable
-    #[structopt(name = "insert", aliases = &["i"])]
+    #[clap(name = "insert", aliases = &["i"])]
     Insert {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
         /// Specify the config-provider identifier
-        #[structopt(name = "config-provider-identifier")]
+        #[clap(name = "config-provider-identifier")]
         id: String,
         /// Specify the name of the environment variable to insert
-        #[structopt(name = "name")]
+        #[clap(name = "name")]
         name: String,
         /// Specify the value of the environment variable to insert
-        #[structopt(name = "value")]
+        #[clap(name = "value")]
         value: String,
     },
     /// Update environment variables
-    #[structopt(name = "put")]
+    #[clap(name = "put")]
     Put {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
         /// Specify the config-provider identifier
-        #[structopt(name = "config-provider-identifier")]
+        #[clap(name = "config-provider-identifier")]
         id: String,
         /// Specify the json file to read
-        #[structopt(name = "file")]
+        #[clap(name = "file")]
         file: PathBuf,
     },
     /// Remove an environment variable
-    #[structopt(name = "remove", aliases = &["r"])]
+    #[clap(name = "remove", aliases = &["r"])]
     Remove {
         /// Specify the output format
-        #[structopt(short = "o", long = "output", default_value)]
+        #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
         /// Specify the config-provider identifier
-        #[structopt(name = "config-provider-identifier")]
+        #[clap(name = "config-provider-identifier")]
         id: String,
         /// Specify the name of the environment variable to remove
-        #[structopt(name = "name")]
+        #[clap(name = "name")]
         name: String,
     },
 }
