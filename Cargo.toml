@@ -1,7 +1,7 @@
 [package]
 name = "clevercloud-sdk"
 description = "A rust client and structures to interact with the Clever-Cloud API."
-version = "0.10.1"
+version = "0.10.2"
 edition = "2021"
 rust-version = "1.60.0"
 authors = ["Florentin Dubois <florentin.dubois@clever-cloud.com>"]
