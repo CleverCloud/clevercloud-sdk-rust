@@ -15,11 +15,9 @@ paw = "^1.0.0"
 serde = { version = "^1.0.137", features = ["derive"] }
 serde_json = "^1.0.81"
 serde_yaml = "^0.8.24"
-slog = "^2.7.0"
-slog-async = "^2.7.0"
-slog-term = "^2.9.0"
-slog-scope = "^4.4.0"
 thiserror = "^1.0.31"
+tracing = "^0.1.34"
+tracing-subscriber = { version = "^0.3.11", default-features = false, features = ["std", "ansi", "tracing-log"] }
 tokio = { version = "^1.18.2", features = ["full"] }
 
 [profile.release]

@@ -5,10 +5,7 @@
 //! project
 use std::sync::Arc;
 
-use slog::{o, Drain, Level, LevelFilter, Logger};
-use slog_async::Async;
-use slog_scope::{crit, debug, info, set_global_logger, GlobalLoggerGuard as Guard};
-use slog_term::{FullFormat, TermDecorator};
+use tracing::{info, debug, error};
 
 use crate::{
     cfg::Configuration,
@@ -17,20 +14,7 @@ use crate::{
 
 pub mod cfg;
 pub mod cmd;
-
-// -----------------------------------------------------------------------------
-// helpers
-
-pub fn initialize(verbosity: &usize) -> Guard {
-    let level = Level::from_usize(Level::Critical.as_usize() + verbosity).unwrap_or(Level::Trace);
-
-    let decorator = TermDecorator::new().build();
-    let drain = FullFormat::new(decorator).build().fuse();
-    let drain = LevelFilter::new(drain, level).fuse();
-    let drain = Async::new(drain).build().fuse();
-
-    set_global_logger(Logger::root(drain, o!()))
-}
+pub mod logging;
 
 // -----------------------------------------------------------------------------
 // Error enumeration
@@ -43,6 +27,8 @@ pub enum Error {
     Command(cmd::Error),
     #[error("failed to parse command line, {0}")]
     ParseCommandLine(std::io::Error),
+    #[error("failed to initialize logging system, {0}")]
+    Logging(logging::Error),
 }
 
 impl From<std::io::Error> for Error {
@@ -63,7 +49,8 @@ impl From<cmd::Error> for Error {
 #[paw::main]
 #[tokio::main]
 pub async fn main(args: Args) -> Result<(), Error> {
-    let _guard = initialize(&args.verbosity);
+    logging::initialize(args.verbosity).map_err(Error::Logging)?;
+
     let result = match &args.config {
         Some(pb) => Configuration::try_from(pb).map_err(Error::Configuration),
         None => Configuration::try_default().map_err(Error::Configuration),
@@ -72,7 +59,7 @@ pub async fn main(args: Args) -> Result<(), Error> {
     let config = match result {
         Ok(config) => Arc::new(config),
         Err(err) => {
-            crit!("Could not load configuration"; "err" => err.to_string());
+            error!("Could not load configuration, {}", err);
             return Err(err);
         }
     };
@@ -84,7 +71,7 @@ pub async fn main(args: Args) -> Result<(), Error> {
     }
 
     if let Err(err) = args.cmd.execute(config).await.map_err(Error::Command) {
-        crit!("Could not execute command"; "error" => err.to_string());
+        error!("Could not execute command, {}", err);
         return Err(err);
     }
 
