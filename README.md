@@ -16,7 +16,7 @@ This crate is under development, you can use it, but it may have bugs or unimple
 To install this dependency, just add the following line to your `Cargo.toml` manifest.
 
 ```toml
-clevercloud-sdk = { version = "^0.10.6", features = ["metrics", "jsonschemas"] }
+clevercloud-sdk = { version = "^0.10.7", features = ["metrics", "jsonschemas"] }
 ```
 
 ## Usage
