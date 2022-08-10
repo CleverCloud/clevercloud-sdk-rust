@@ -7,18 +7,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "^0.1.56"
+async-trait = "^0.1.57"
 clevercloud-sdk = { path = "../..", features = ["tokio", "metrics", "trace", "jsonschemas"] }
-clap = { version = "^3.2.12", features = ["derive"] }
-config = "^0.13.1"
+clap = { version = "^3.2.16", features = ["derive"] }
+config = "^0.13.2"
 paw = "^1.0.0"
-serde = { version = "^1.0.139", features = ["derive"] }
-serde_json = "^1.0.82"
-serde_yaml = "^0.8.26"
-thiserror = "^1.0.31"
-tokio = { version = "^1.20.0", features = ["full"] }
-tracing = "^0.1.35"
-tracing-subscriber = { version = "^0.3.14", default-features = false, features = ["std", "ansi", "tracing-log"] }
+serde = { version = "^1.0.143", features = ["derive"] }
+serde_json = "^1.0.83"
+serde_yaml = "^0.9.4"
+thiserror = "^1.0.32"
+tokio = { version = "^1.20.1", features = ["full"] }
+tracing = "^0.1.36"
+tracing-subscriber = { version = "^0.3.15", default-features = false, features = ["std", "ansi", "tracing-log"] }
 
 [profile.release]
 lto = true
