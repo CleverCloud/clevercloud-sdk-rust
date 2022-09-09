@@ -27,7 +27,7 @@ pub mod redis;
 // Feature structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
 pub struct Feature {
     #[serde(rename = "name")]
     pub name: String,
@@ -39,7 +39,7 @@ pub struct Feature {
 // Cluster structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct Cluster<T> {
     #[serde(rename = "id")]
     pub id: String,
@@ -57,7 +57,7 @@ pub struct Cluster<T> {
 // AddonProvider structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
 pub struct AddonProvider<T>
 where
     T: Ord,
