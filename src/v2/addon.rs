@@ -19,7 +19,7 @@ use crate::{v4::addon_provider::config_provider::addon::environment::Variable, C
 // Provider structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
 pub struct Provider {
     #[serde(rename = "id")]
     pub id: String,
@@ -55,7 +55,7 @@ pub struct Provider {
 // Feature structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
 pub struct Feature {
     #[serde(rename = "name")]
     pub name: String,
@@ -133,7 +133,7 @@ pub struct Opts {
 // CreateOpts structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
 pub struct CreateOpts {
     #[serde(rename = "name")]
     pub name: String,
