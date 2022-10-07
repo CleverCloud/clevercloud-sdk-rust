@@ -2,7 +2,7 @@
 name = "cleverctl"
 description = "A command line interface that use the clevercloud-sdk"
 authors = ["Florentin Dubois <florentin.dubois@clever-cloud.com>"]
-version = "0.10.8"
+version = "0.10.9"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

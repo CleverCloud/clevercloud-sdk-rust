@@ -16,7 +16,7 @@ $ git clone https://github.com/CleverCloud/clevercloud-sdk-rust.git
 Then, go into the command line interface example.
 
 ```shell
-$ cd clevercloud-sdk-rust/examples/cli
+$ cd clevercloud-sdk-rust/examples/cleverctl
 ```
 
 Now, we are able to build the command line interface.
@@ -33,12 +33,12 @@ The binary of the command line interface will be located at the following path
 Once, the command line interface is built, you can use it like this:
 
 ```shell
-$ target/release/cli -h
-cli 0.1.0
+$ target/release/cleverctl -h
+cleverctl 0.10.9
 Command enum contains all operations that the command line could handle
 
 USAGE:
-    cli [FLAGS] [OPTIONS] <SUBCOMMAND>
+    cleverctl [FLAGS] [OPTIONS] <SUBCOMMAND>
 
 FLAGS:
     -t, --check      Check the healthiness of the configuration
