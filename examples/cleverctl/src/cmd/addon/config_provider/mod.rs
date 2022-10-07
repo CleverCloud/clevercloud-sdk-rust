@@ -27,8 +27,7 @@ pub enum Error {
 
 #[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum ConfigProvider {
-    /// Interact with config-provider environment
-    #[clap(name = "environment", aliases = &["env"], subcommand)]
+    #[clap(name = "environment", aliases = &["env"], subcommand, about = "Interact with config-provider environment")]
     Environment(Environment),
 }
 

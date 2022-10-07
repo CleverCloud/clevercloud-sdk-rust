@@ -42,8 +42,7 @@ pub enum Error {
 
 #[derive(Subcommand, PartialEq, Eq, Clone, Debug)]
 pub enum Environment {
-    /// Get environment variables
-    #[clap(name = "get")]
+    #[clap(name = "get", about = "Get environment variables")]
     Get {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
@@ -52,8 +51,7 @@ pub enum Environment {
         #[clap(name = "config-provider-identifier")]
         id: String,
     },
-    /// Insert an environment variable
-    #[clap(name = "insert", aliases = &["i"])]
+    #[clap(name = "insert", aliases = &["i"], about = "Insert an environment variable")]
     Insert {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
@@ -68,8 +66,7 @@ pub enum Environment {
         #[clap(name = "value")]
         value: String,
     },
-    /// Update environment variables
-    #[clap(name = "put")]
+    #[clap(name = "put", about = "Update environment variables")]
     Put {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
@@ -81,8 +78,7 @@ pub enum Environment {
         #[clap(name = "file")]
         file: PathBuf,
     },
-    /// Remove an environment variable
-    #[clap(name = "remove", aliases = &["r"])]
+    #[clap(name = "remove", aliases = &["r"], about = "Remove an environment variable")]
     Remove {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
