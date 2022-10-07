@@ -37,8 +37,7 @@ pub enum Error {
 /// Command enum contains all operations that could be achieved on the user
 #[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
-    /// Get information about the current user
-    #[clap(name = "get", aliases = &["ge", "g"])]
+    #[clap(name = "get", aliases = &["ge", "g"], about = "Get information about the current user")]
     Get {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]

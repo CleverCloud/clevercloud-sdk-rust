@@ -42,8 +42,7 @@ pub enum Error {
 
 #[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
-    /// List addons of an organisation
-    #[clap(name = "list")]
+    #[clap(name = "list", about = "List addons of an organisation")]
     List {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
@@ -52,8 +51,7 @@ pub enum Command {
         #[clap(name = "organisation-identifier")]
         organisation_id: String,
     },
-    /// Get addon of an organisation
-    #[clap(name = "get")]
+    #[clap(name = "get", about = "Get addon of an organisation")]
     Get {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
@@ -65,8 +63,7 @@ pub enum Command {
         #[clap(name = "addon-identifier")]
         addon_id: String,
     },
-    /// Interact with ConfigProvider addon
-    #[clap(name = "config-provider", aliases = &["cp"], subcommand)]
+    #[clap(name = "config-provider", aliases = &["cp"], subcommand, about = "Interact with ConfigProvider addon")]
     ConfigProvider(ConfigProvider),
 }
 

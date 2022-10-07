@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ArgAction};
 use serde::Serialize;
 use paw::ParseArgs;
 
@@ -41,8 +41,9 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Output enumeration
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Debug)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Debug, Default)]
 pub enum Output {
+    #[default]
     Json,
     Yaml,
 }
@@ -65,12 +66,6 @@ impl Display for Output {
             Self::Json => write!(f, "json"),
             Self::Yaml => write!(f, "yaml"),
         }
-    }
-}
-
-impl Default for Output {
-    fn default() -> Self {
-        Self::Json
     }
 }
 
@@ -103,14 +98,11 @@ pub trait Executor {
 /// Command enum contains all operations that the command line could handle
 #[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
-    /// Interact with the current user
-    #[clap(name = "self", aliases = &["sel", "se", "s"], subcommand)]
+    #[clap(name = "self", aliases = &["sel", "se", "s"], subcommand, about = "Interact with the current user")]
     Myself(myself::Command),
-    /// Interact with addons
-    #[clap(name = "addon", aliases = &["addo", "add", "ad", "a"], subcommand)]
+    #[clap(name = "addon", aliases = &["addo", "add", "ad", "a"], subcommand, about = "Interact with addons")]
     Addon(addon::Command),
-    /// Interact with zones
-    #[clap(name = "zone", aliases = &["zon", "zo", "z"], subcommand)]
+    #[clap(name = "zone", aliases = &["zon", "zo", "z"], subcommand, about = "Interact with zones")]
     Zone(zone::Command),
 }
 
@@ -139,7 +131,7 @@ pub struct Args {
     #[clap(short = 'c', long = "config", global = true)]
     pub config: Option<PathBuf>,
     /// Increase log verbosity
-    #[clap(short = 'v', global = true, parse(from_occurrences))]
+    #[clap(short = 'v', global = true, action = ArgAction::Count)]
     pub verbosity: usize,
     /// Check the healthiness of the configuration
     #[clap(short = 't', long = "check", global = true)]

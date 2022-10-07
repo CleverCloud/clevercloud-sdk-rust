@@ -37,22 +37,19 @@ pub enum Error {
 /// Command enum contains all operations that could be achieved on the zone API
 #[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
 pub enum Command {
-    /// List available zones
-    #[clap(name = "list", aliases = &["l"])]
+    #[clap(name = "list", aliases = &["l"], about = "List available zones")]
     List {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
     },
-    /// List application available zones
-    #[clap(name = "application", aliases = &["app", "a"])]
+    #[clap(name = "application", aliases = &["app", "a"], about = "List application available zones")]
     Application {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
         output: Output,
     },
-    /// List hds available zones
-    #[clap(name = "hds", aliases = &["h"])]
+    #[clap(name = "hds", aliases = &["h"], about = "List hds available zones")]
     Hds {
         /// Specify the output format
         #[clap(short = 'o', long = "output", default_value_t)]
