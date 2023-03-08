@@ -2,6 +2,7 @@
 //!
 //! This module provide helpers and structures to interact with the elasticsearch
 //! addon provider
+#![allow(deprecated)]
 
 use std::{
     convert::TryFrom,
@@ -41,8 +42,10 @@ pub enum Error {
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
+    #[deprecated]
     V6 = 6,
     V7 = 7,
+    V8 = 8,
 }
 
 impl FromStr for Version {
@@ -52,6 +55,7 @@ impl FromStr for Version {
         Ok(match s {
             "6" => Self::V6,
             "7" => Self::V7,
+            "8" => Self::V8,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -79,6 +83,7 @@ impl Display for Version {
         match self {
             Self::V6 => write!(f, "6"),
             Self::V7 => write!(f, "7"),
+            Self::V8 => write!(f, "8"),
         }
     }
 }
