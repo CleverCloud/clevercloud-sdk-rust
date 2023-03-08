@@ -2,6 +2,7 @@
 //!
 //! This module provide helpers and structures to interact with the redis
 //! addon provider
+#![allow(deprecated)]
 
 use std::{
     convert::TryFrom,
@@ -41,7 +42,9 @@ pub enum Error {
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
+    #[deprecated]
     V6dot2dot6 = 626,
+    V7dot0dot4 = 704,
 }
 
 impl FromStr for Version {
@@ -50,6 +53,7 @@ impl FromStr for Version {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "6.2.6" => Self::V6dot2dot6,
+            "7.0.4" => Self::V7dot0dot4,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -76,6 +80,7 @@ impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::V6dot2dot6 => write!(f, "6.2.6"),
+            Self::V7dot0dot4 => write!(f, "7.0.4"),
         }
     }
 }
