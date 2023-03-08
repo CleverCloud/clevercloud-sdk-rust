@@ -4,7 +4,7 @@
 [![Released API docs](https://docs.rs/clevercloud-sdk/badge.svg)](https://docs.rs/clevercloud-sdk)
 [![Continuous integration](https://github.com/CleverCloud/clevercloud-sdk-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CleverCloud/clevercloud-sdk-rust/actions/workflows/ci.yml)
 
-> This crate provides structures and client to interact with the Clever-Cloud
+> This crate provides structures and a client to interact with the Clever-Cloud
 > API.
 
 ## Status
