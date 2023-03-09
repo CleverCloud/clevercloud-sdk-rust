@@ -5,7 +5,7 @@
 //! project
 use std::sync::Arc;
 
-use tracing::{info, debug, error};
+use tracing::{debug, error, info};
 
 use crate::{
     cfg::Configuration,

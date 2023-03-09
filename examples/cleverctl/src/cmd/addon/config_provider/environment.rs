@@ -1,5 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
+use clap::Subcommand;
 use clevercloud_sdk::{
     oauth10a::{
         proxy::{self, ProxyConnectorBuilder},
@@ -8,7 +9,6 @@ use clevercloud_sdk::{
     v4::addon_provider::config_provider::addon::environment::{self, Variable},
     Client,
 };
-use clap::Subcommand;
 use tokio::{fs, task::spawn_blocking as blocking};
 
 use crate::{
