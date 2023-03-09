@@ -9,9 +9,9 @@ use std::{
     sync::Arc,
 };
 
-use clap::{Parser, Subcommand, ArgAction};
-use serde::Serialize;
+use clap::{ArgAction, Parser, Subcommand};
 use paw::ParseArgs;
+use serde::Serialize;
 
 use crate::cfg::Configuration;
 
