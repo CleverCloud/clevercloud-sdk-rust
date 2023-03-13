@@ -48,13 +48,13 @@ You could found more examples of how you could use the clevercloud-sdk by lookin
 
 ## Features
 
-| name        | description                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------------------- |
-| trace       | Use `tracing` crate to expose traces                                                              |
-| tokio       | Use `tokio` crate as back-end for `tracing` crate                                                 |
-| jsonschemas | Use `schemars` to add a derive instruction to generate json schemas representation of structures  |
-| logging     | Use the `log` facility crate to print logs. Implies `oauth10a/logging` feature                    |
-| metrics     | Use `lazy_static` and `prometheus` crates to register metrics. Implies `oauth10a/metrics` feature |
+| name        | description                                                                                      |
+| ----------- |--------------------------------------------------------------------------------------------------|
+| trace       | Use `tracing` crate to expose traces                                                             |
+| tokio       | Use `tokio` crate as back-end for `tracing` crate                                                |
+| jsonschemas | Use `schemars` to add a derive instruction to generate json schemas representation of structures |
+| logging     | Use the `log` facility crate to print logs. Implies `oauth10a/logging` feature                   |
+| metrics     | Expose HTTP metrics through `oauth10a` crate feature.                                            |
 
 ### Metrics
 
