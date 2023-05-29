@@ -49,7 +49,7 @@ impl From<cmd::Error> for Error {
 #[paw::main]
 #[tokio::main]
 pub async fn main(args: Args) -> Result<(), Error> {
-    logging::initialize(args.verbosity).map_err(Error::Logging)?;
+    logging::initialize(args.verbosity as usize).map_err(Error::Logging)?;
 
     let result = match &args.config {
         Some(pb) => Configuration::try_from(pb).map_err(Error::Configuration),
@@ -59,7 +59,7 @@ pub async fn main(args: Args) -> Result<(), Error> {
     let config = match result {
         Ok(config) => Arc::new(config),
         Err(err) => {
-            error!("Could not load configuration, {}", err);
+            error!(error = err.to_string(), "Could not load configuration");
             return Err(err);
         }
     };
@@ -71,7 +71,7 @@ pub async fn main(args: Args) -> Result<(), Error> {
     }
 
     if let Err(err) = args.cmd.execute(config).await.map_err(Error::Command) {
-        error!("Could not execute command, {}", err);
+        error!(error = err.to_string(), "Could not execute command");
         return Err(err);
     }
 

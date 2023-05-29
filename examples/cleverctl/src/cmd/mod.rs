@@ -3,6 +3,7 @@
 //! This module provides structures and enums to interact with the command line
 //! interface
 use std::{
+    collections::BTreeMap,
     fmt::{self, Display, Formatter},
     path::PathBuf,
     str::FromStr,
@@ -16,6 +17,7 @@ use serde::Serialize;
 use crate::cfg::Configuration;
 
 pub mod addon;
+pub mod functions;
 pub mod myself;
 pub mod zone;
 
@@ -36,6 +38,8 @@ pub enum Error {
     AddonCommand(addon::Error),
     #[error("failed to execute command relative to zones, {0}")]
     ZoneCommand(zone::Error),
+    #[error("failed to execute command relative to functions, {0}")]
+    FunctionCommand(functions::Error),
 }
 
 // -----------------------------------------------------------------------------
@@ -104,6 +108,8 @@ pub enum Command {
     Addon(addon::Command),
     #[clap(name = "zone", aliases = &["zon", "zo", "z"], subcommand, about = "Interact with zones")]
     Zone(zone::Command),
+    #[clap(name = "functions", aliases = &["functio", "functi", "funct", "func", "fun", "fu", "f"], subcommand, about = "Interact with functions")]
+    Function(functions::Command),
 }
 
 #[async_trait::async_trait]
@@ -115,6 +121,7 @@ impl Executor for Command {
             Self::Myself(cmd) => cmd.execute(config).await.map_err(Error::MyselfCommand),
             Self::Addon(cmd) => cmd.execute(config).await.map_err(Error::AddonCommand),
             Self::Zone(cmd) => cmd.execute(config).await.map_err(Error::ZoneCommand),
+            Self::Function(cmd) => cmd.execute(config).await.map_err(Error::FunctionCommand),
         }
     }
 }
@@ -132,9 +139,9 @@ pub struct Args {
     pub config: Option<PathBuf>,
     /// Increase log verbosity
     #[clap(short = 'v', global = true, action = ArgAction::Count)]
-    pub verbosity: usize,
+    pub verbosity: u8,
     /// Check the healthiness of the configuration
-    #[clap(short = 't', long = "check", global = true)]
+    #[clap(long = "check", global = true)]
     pub check: bool,
     #[clap(subcommand)]
     pub cmd: Command,
@@ -146,4 +153,23 @@ impl ParseArgs for Args {
     fn parse_args() -> Result<Self, Self::Error> {
         Ok(Args::parse())
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+// Helpers
+
+pub fn parse_btreemap(value: &str) -> Result<BTreeMap<String, String>, String> {
+    let mut btreemap: BTreeMap<String, String> = BTreeMap::new();
+
+    for s in value.split(',') {
+        if let Some((key, value)) = s.trim().split_once('=') {
+            btreemap.insert(key.to_owned(), value.to_owned());
+        } else {
+            return Err(format!(
+                "failed to parse '{value}' as a map (a.k.a k1=v1,k2=v2)"
+            ));
+        }
+    }
+
+    Ok(btreemap)
 }
