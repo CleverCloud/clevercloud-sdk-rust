@@ -8,11 +8,11 @@ use std::{fmt::Debug, marker::PhantomData};
 pub use oauth10a::client as oauth10a;
 
 use async_trait::async_trait;
-use hyper::Method;
+use hyper::{Body, Method, Response};
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::oauth10a::{
-    connector::{Connect, GaiResolver, HttpConnector, HttpsConnector},
+    connector::{Connect, GaiResolver, HttpConnector, HttpsConnector, HttpsConnectorBuilder},
     ClientError, Credentials, Request, RestClient,
 };
 
@@ -109,6 +109,11 @@ where
     {
         self.inner.request(method, endpoint, payload).await
     }
+
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    async fn execute(&self, request: hyper::Request<Body>) -> Result<Response<Body>, Self::Error> {
+        self.inner.execute(request).await
+    }
 }
 
 #[async_trait]
@@ -172,16 +177,26 @@ where
 impl From<Credentials> for Client<HttpsConnector<HttpConnector<GaiResolver>>> {
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn from(credentials: Credentials) -> Self {
-        Self::builder()
-            .with_credentials(credentials)
-            .build(HttpsConnector::new())
+        Self::builder().with_credentials(credentials).build(
+            HttpsConnectorBuilder::new()
+                .with_webpki_roots()
+                .https_or_http()
+                .enable_http1()
+                .build(),
+        )
     }
 }
 
 impl Default for Client<HttpsConnector<HttpConnector<GaiResolver>>> {
     #[cfg_attr(feature = "trace", tracing::instrument)]
     fn default() -> Self {
-        Self::builder().build(HttpsConnector::new())
+        Self::builder().build(
+            HttpsConnectorBuilder::new()
+                .with_webpki_roots()
+                .https_or_http()
+                .enable_http1()
+                .build(),
+        )
     }
 }
 
@@ -210,5 +225,10 @@ where
     #[cfg_attr(feature = "trace", tracing::instrument)]
     pub fn set_credentials(&mut self, credentials: Option<Credentials>) {
         self.inner.set_credentials(credentials);
+    }
+
+    #[cfg_attr(feature = "trace", tracing::instrument)]
+    pub fn inner(&self) -> &hyper::Client<C> {
+        self.inner.inner()
     }
 }
