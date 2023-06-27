@@ -55,6 +55,8 @@ impl Into<CleverCloudCredentials> for Credentials {
 pub struct Configuration {
     #[serde(rename = "credentials")]
     pub credentials: Credentials,
+    #[serde(rename = "endpoint")]
+    pub endpoint: String,
 }
 
 impl TryFrom<&PathBuf> for Configuration {

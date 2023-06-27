@@ -261,6 +261,7 @@ pub async fn list(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     let functionz = functions::list(&client, organisation_id)
@@ -287,6 +288,7 @@ pub async fn create(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     let function = functions::create(&client, organisation_id, opts)
@@ -313,6 +315,7 @@ pub async fn get(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     let function = functions::get(&client, organisation_id, function_id)
@@ -340,6 +343,7 @@ pub async fn update(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     let function = functions::update(&client, organisation_id, function_id, opts)
@@ -365,6 +369,7 @@ pub async fn delete(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     functions::delete(&client, organisation_id, function_id)
@@ -382,6 +387,7 @@ pub async fn execute(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     info!(

@@ -72,6 +72,7 @@ where
             Some(endpoint) => endpoint,
             None => PUBLIC_ENDPOINT.to_string(),
         };
+        println!("{endpoint}");
 
         Client::<C>::new(connector, endpoint, self.credentials)
     }
