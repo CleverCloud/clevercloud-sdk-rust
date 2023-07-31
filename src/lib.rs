@@ -45,7 +45,7 @@ where
         Self {
             endpoint: None,
             credentials: None,
-            phantom: PhantomData::default(),
+            phantom: Default::default(),
         }
     }
 }
