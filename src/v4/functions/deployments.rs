@@ -99,7 +99,7 @@ pub enum Status {
     WaitingForUpload,
     #[serde(rename = "PACKAGING")]
     Packaging,
-    #[serde(rename = "PACKAGING")]
+    #[serde(rename = "DEPLOYING")]
     Deploying,
     #[serde(rename = "READY")]
     Ready,
