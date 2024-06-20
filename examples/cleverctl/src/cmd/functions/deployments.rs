@@ -187,6 +187,7 @@ pub async fn list(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     let deploymentz = deployments::list(&client, organisation_id, function_id)
@@ -215,6 +216,7 @@ pub async fn create(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     info!(
@@ -314,6 +316,7 @@ pub async fn get(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     let deployment = deployments::get(&client, organisation_id, function_id, deployment_id)
@@ -347,6 +350,7 @@ pub async fn delete(
     let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
     let client = Client::builder()
         .with_credentials(credentials)
+        .with_endpoint(config.endpoint.clone())
         .build(connector);
 
     deployments::delete(&client, organisation_id, function_id, deployment_id)
