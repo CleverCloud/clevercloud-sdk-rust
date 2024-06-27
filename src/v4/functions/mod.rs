@@ -170,7 +170,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions",
+        "{}/v4/functions/organisations/{organisation_id}/functions",
         client.endpoint
     );
 
@@ -196,7 +196,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions",
+        "{}/v4/functions/organisations/{organisation_id}/functions",
         client.endpoint
     );
 
@@ -224,7 +224,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
         client.endpoint
     );
 
@@ -253,7 +253,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
         client.endpoint
     );
 
@@ -281,7 +281,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
         client.endpoint
     );
 

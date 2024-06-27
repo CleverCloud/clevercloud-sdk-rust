@@ -221,7 +221,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}/deployments",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments",
         client.endpoint
     );
 
@@ -248,7 +248,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}/deployments",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments",
         client.endpoint
     );
 
@@ -277,7 +277,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
         client.endpoint
     );
 
@@ -310,7 +310,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}/trigger",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}/trigger",
         client.endpoint
     );
 
@@ -381,7 +381,7 @@ where
     C: Connect + Clone + Debug + Send + Sync + 'static,
 {
     let path = format!(
-        "{}/v4/functions/organizations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
+        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
         client.endpoint
     );
 
