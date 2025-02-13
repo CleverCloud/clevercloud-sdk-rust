@@ -8,12 +8,15 @@ use std::{
 };
 
 use chrono::{DateTime, Utc};
-use hyper::{
-    header::{CONTENT_LENGTH, CONTENT_TYPE},
-    Body, Method,
-};
 use log::{debug, log_enabled, Level};
-use oauth10a::client::{connector::Connect, ClientError, Request, RestClient};
+use oauth10a::client::{
+    reqwest::{
+        self,
+        header::{HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
+        Body, Method,
+    },
+    url, ClientError, Request, RestClient,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::Client;
@@ -32,6 +35,8 @@ pub enum Error {
     ParsePlatform(String),
     #[error("failed to parse the status '{0}', available values are 'waiting_for_upload', 'deploying', 'packaging', 'ready' and 'error'")]
     ParseStatus(String),
+    #[error("failed to parse endpoint '{0}', {1}")]
+    ParseUrl(String, url::ParseError),
     #[error("failed to list deployments for function '{0}' of organisation '{1}', {2}")]
     List(String, String, ClientError),
     #[error("failed to create deployment for function '{0}' on organisation '{1}', {2}")]
@@ -43,7 +48,7 @@ pub enum Error {
     #[error("failed to delete deployment '{0}' of function '{1}' on organisation '{2}', {3}")]
     Delete(String, String, String, ClientError),
     #[error("failed to create request, {0}")]
-    Request(hyper::http::Error),
+    Request(reqwest::Error),
     #[error("failed to execute request, {0}")]
     Execute(ClientError),
     #[error("failed to execute request, got status code {0}")]
@@ -210,16 +215,13 @@ pub struct Deployment {
 // ----------------------------------------------------------------------------
 // Helpers
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the list of deployments for a function
-pub async fn list<C>(
-    client: &Client<C>,
+pub async fn list(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
-) -> Result<Vec<Deployment>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Vec<Deployment>, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments",
         client.endpoint
@@ -236,17 +238,14 @@ where
         .map_err(|err| Error::List(function_id.to_string(), organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// create a deployment on the given function
-pub async fn create<C>(
-    client: &Client<C>,
+pub async fn create(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
     opts: &Opts,
-) -> Result<DeploymentCreation, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<DeploymentCreation, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments",
         client.endpoint
@@ -265,17 +264,14 @@ where
         .map_err(|err| Error::Create(function_id.to_string(), organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the deployment information of the function
-pub async fn get<C>(
-    client: &Client<C>,
+pub async fn get(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
     deployment_id: &str,
-) -> Result<Deployment, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Deployment, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
         client.endpoint
@@ -298,17 +294,14 @@ where
     })
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// trigger the deployment of the function once the WebAssembly has been uploaded
-pub async fn trigger<C>(
-    client: &Client<C>,
+pub async fn trigger(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
     deployment_id: &str,
-) -> Result<(), Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<(), Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}/trigger",
         client.endpoint
@@ -321,11 +314,10 @@ where
         );
     }
 
-    let req = hyper::Request::builder()
-        .method(&Method::POST)
-        .uri(&path)
-        .body(Body::empty())
-        .map_err(Error::Request)?;
+    let req = reqwest::Request::new(
+        Method::POST,
+        path.parse().map_err(|err| Error::ParseUrl(path, err))?,
+    );
 
     let res = client.execute(req).await.map_err(Error::Execute)?;
     let status = res.status();
@@ -336,19 +328,23 @@ where
     Ok(())
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// Upload the WebAssembly on the endpoint
-pub async fn upload<C>(client: &Client<C>, endpoint: &str, buf: Vec<u8>) -> Result<(), Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
-    let req = hyper::Request::builder()
-        .method(Method::PUT)
-        .uri(endpoint)
-        .header(CONTENT_TYPE, MIME_APPLICATION_WASM.to_string())
-        .header(CONTENT_LENGTH, buf.len())
-        .body(Body::from(buf))
-        .map_err(Error::Request)?;
+pub async fn upload(client: &Client, endpoint: &str, buf: Vec<u8>) -> Result<(), Error> {
+    let mut req = reqwest::Request::new(
+        Method::PUT,
+        endpoint
+            .parse()
+            .map_err(|err| Error::ParseUrl(endpoint.to_string(), err))?,
+    );
+
+    req.headers_mut().insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static(MIME_APPLICATION_WASM),
+    );
+    req.headers_mut()
+        .insert(CONTENT_LENGTH, HeaderValue::from(buf.len()));
+    *req.body_mut() = Some(Body::from(buf));
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
@@ -357,7 +353,7 @@ where
 
     let res = client
         .inner()
-        .request(req)
+        .execute(req)
         .await
         .map_err(|err| Error::Execute(ClientError::Request(err)))?;
 
@@ -369,17 +365,14 @@ where
     Ok(())
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// delete the deployment from the function
-pub async fn delete<C>(
-    client: &Client<C>,
+pub async fn delete(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
     deployment_id: &str,
-) -> Result<(), Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<(), Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
         client.endpoint

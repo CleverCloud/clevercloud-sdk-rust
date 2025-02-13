@@ -5,7 +5,6 @@
 
 use std::{collections::BTreeMap, fmt::Debug};
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -84,7 +83,7 @@ pub struct Plan {
     #[serde(rename = "price")]
     pub price: f32,
     #[serde(rename = "price_id")]
-    pub price_id: String,
+    pub price_id: Option<String>,
     #[serde(rename = "features")]
     pub features: Vec<Feature>,
     #[serde(rename = "zones")]
@@ -167,12 +166,9 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the list of addons for the given organisation
-pub async fn list<C>(client: &Client<C>, organisation_id: &str) -> Result<Vec<Addon>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons",
         client.endpoint, organisation_id,
@@ -192,12 +188,9 @@ where
         .map_err(|err| Error::List(organisation_id.to_owned(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the addon for the given the organisation and identifier
-pub async fn get<C>(client: &Client<C>, organisation_id: &str, id: &str) -> Result<Addon, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Addon, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons/{}",
         client.endpoint, organisation_id, id
@@ -214,16 +207,13 @@ where
         .map_err(|err| Error::Get(id.to_owned(), organisation_id.to_owned(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// create the addon and returns it
-pub async fn create<C>(
-    client: &Client<C>,
+pub async fn create(
+    client: &Client,
     organisation_id: &str,
     opts: &CreateOpts,
-) -> Result<Addon, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Addon, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons",
         client.endpoint, organisation_id
@@ -240,12 +230,9 @@ where
         .map_err(|err| Error::Create(organisation_id.to_owned(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// delete the given addon
-pub async fn delete<C>(client: &Client<C>, organisation_id: &str, id: &str) -> Result<(), Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<(), Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons/{}",
         client.endpoint, organisation_id, id
@@ -265,16 +252,13 @@ where
         .map_err(|err| Error::Delete(id.to_owned(), organisation_id.to_owned(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns environment variables for an addon
-pub async fn environment<C>(
-    client: &Client<C>,
+pub async fn environment(
+    client: &Client,
     organisation_id: &str,
     id: &str,
-) -> Result<BTreeMap<String, String>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<BTreeMap<String, String>, Error> {
     let path = format!(
         "{}/v2/organisations/{}/addons/{}/env",
         client.endpoint, organisation_id, id

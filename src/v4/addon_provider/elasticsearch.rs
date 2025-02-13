@@ -1,6 +1,6 @@
 //! # ElasticSearch addon provider module
 //!
-//! This module provide helpers and structures to interact with the elasticsearch
+//! This module provides helpers and structures to interact with the elasticsearch
 //! addon provider
 #![allow(deprecated)]
 
@@ -10,7 +10,6 @@ use std::{
     str::FromStr,
 };
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -92,11 +91,8 @@ impl Display for Version {
 // Helpers functions
 
 /// returns information about the elasticsearch addon provider
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn get<C>(client: &Client<C>) -> Result<AddonProvider<Version>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,

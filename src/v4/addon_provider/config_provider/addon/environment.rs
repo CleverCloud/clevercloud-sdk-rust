@@ -5,7 +5,6 @@
 
 use std::{collections::HashMap, fmt::Debug};
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -28,14 +27,14 @@ pub struct Variable {
 }
 
 impl From<(String, String)> for Variable {
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     fn from((name, value): (String, String)) -> Self {
         Self::new(name, value)
     }
 }
 
 impl Variable {
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn new(name: String, value: String) -> Self {
         Self { name, value }
     }
@@ -56,11 +55,8 @@ pub enum Error {
 // Helpers
 
 /// Retrieve environment variables of the config provider addon
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn get<C>(client: &Client<C>, id: &str) -> Result<Vec<Variable>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn get(client: &Client, id: &str) -> Result<Vec<Variable>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}/addons/{}/env",
         client.endpoint,
@@ -80,15 +76,12 @@ where
 }
 
 /// Update environment variables of the config provider addon
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn put<C>(
-    client: &Client<C>,
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn put(
+    client: &Client,
     id: &str,
     variables: &Vec<Variable>,
-) -> Result<Vec<Variable>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Vec<Variable>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}/addons/{}/env",
         client.endpoint,
@@ -108,24 +101,18 @@ where
 }
 
 /// Insert a new environment variable into config provider
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn insert<C>(client: &Client<C>, id: &str, var: Variable) -> Result<Vec<Variable>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn insert(client: &Client, id: &str, var: Variable) -> Result<Vec<Variable>, Error> {
     bulk_insert(client, id, &[var]).await
 }
 
 /// Insert multiple new environment variables into config provider
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn bulk_insert<C>(
-    client: &Client<C>,
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn bulk_insert(
+    client: &Client,
     id: &str,
     vars: &[Variable],
-) -> Result<Vec<Variable>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Vec<Variable>, Error> {
     let mut v = get(client, id)
         .await?
         .iter()
@@ -147,24 +134,18 @@ where
 }
 
 /// Remove an environment variable from config provider
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn remove<C>(client: &Client<C>, id: &str, name: &str) -> Result<Vec<Variable>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn remove(client: &Client, id: &str, name: &str) -> Result<Vec<Variable>, Error> {
     bulk_remove(client, id, &[name]).await
 }
 
 /// Remove multiples environment variables from config provider
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn bulk_remove<C>(
-    client: &Client<C>,
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn bulk_remove(
+    client: &Client,
     id: &str,
     names: &[&str],
-) -> Result<Vec<Variable>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Vec<Variable>, Error> {
     let v: Vec<_> = get(client, id)
         .await?
         .iter()

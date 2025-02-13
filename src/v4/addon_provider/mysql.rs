@@ -1,6 +1,6 @@
 //! # MySql addon provider module
 //!
-//! This module provide helpers and structures to interact with the mysql
+//! This module provides helpers and structures to interact with the mysql
 //! addon provider
 
 use std::{
@@ -9,7 +9,6 @@ use std::{
     str::FromStr,
 };
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -43,6 +42,7 @@ pub enum Error {
 pub enum Version {
     V5dot7 = 57,
     V8dot0 = 80,
+    V8dot4 = 84,
 }
 
 impl FromStr for Version {
@@ -52,6 +52,7 @@ impl FromStr for Version {
         Ok(match s {
             "5.7" => Self::V5dot7,
             "8.0" => Self::V8dot0,
+            "8.4" => Self::V8dot4,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -79,6 +80,7 @@ impl Display for Version {
         match self {
             Self::V5dot7 => write!(f, "5.7"),
             Self::V8dot0 => write!(f, "8.0"),
+            Self::V8dot4 => write!(f, "8.4"),
         }
     }
 }
@@ -87,11 +89,8 @@ impl Display for Version {
 // Helpers functions
 
 /// returns information about the mysql addon provider
-#[cfg_attr(feature = "trace", tracing::instrument)]
-pub async fn get<C>(client: &Client<C>) -> Result<AddonProvider<Version>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,

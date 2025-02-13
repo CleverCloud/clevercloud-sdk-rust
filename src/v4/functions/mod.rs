@@ -6,9 +6,12 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
 use chrono::{DateTime, Utc};
-use hyper::{body::Buf, Body, Method, Request};
 use log::{debug, log_enabled, Level};
-use oauth10a::client::{connector::Connect, ClientError, RestClient};
+use oauth10a::client::{
+    bytes::Buf,
+    reqwest::{self, Method},
+    url, ClientError, RestClient,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::Client;
@@ -20,6 +23,8 @@ pub mod deployments;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
+    #[error("failed to parse endpoint '{0}', {1}")]
+    ParseUrl(String, url::ParseError),
     #[error("failed to list functions for organisation '{0}', {1}")]
     List(String, ClientError),
     #[error("failed to create function on organisation '{0}', {1}")]
@@ -31,13 +36,11 @@ pub enum Error {
     #[error("failed to delete function '{0}' of organisation '{1}', {2}")]
     Delete(String, String, ClientError),
     #[error("failed to aggregate body, {0}")]
-    BodyAggregation(hyper::Error),
+    BodyAggregation(reqwest::Error),
     #[error("failed to deserialize execute response payload, {0}")]
     Deserialize(serde_json::Error),
-    #[error("failed to create request, {0}")]
-    Request(hyper::http::Error),
     #[error("failed to execute request, {0}")]
-    Execute(hyper::Error),
+    Execute(reqwest::Error),
     #[error("failed to execute request, got status code {0}")]
     StatusCode(u16),
 }
@@ -124,7 +127,7 @@ pub enum ExecutionResult {
 }
 
 impl ExecutionResult {
-    #[cfg_attr(feature = "trace", tracing::instrument(skip_all))]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn ok<T, U, V>(stdout: T, stderr: U, dmesg: V, current_pages: Option<u64>) -> Self
     where
         T: ToString,
@@ -139,7 +142,7 @@ impl ExecutionResult {
         }
     }
 
-    #[cfg_attr(feature = "trace", tracing::instrument(skip_all))]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn err<T>(error: T) -> Self
     where
         T: ToString,
@@ -149,12 +152,12 @@ impl ExecutionResult {
         }
     }
 
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn is_ok(&self) -> bool {
         matches!(self, Self::Ok { .. })
     }
 
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn is_err(&self) -> bool {
         !self.is_ok()
     }
@@ -163,12 +166,9 @@ impl ExecutionResult {
 // -----------------------------------------------------------------------------
 // Helpers
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the list of function for an organisation
-pub async fn list<C>(client: &Client<C>, organisation_id: &str) -> Result<Vec<Function>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Function>, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions",
         client.endpoint
@@ -185,16 +185,13 @@ where
         .map_err(|err| Error::List(organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// create a function on the given organisation
-pub async fn create<C>(
-    client: &Client<C>,
+pub async fn create(
+    client: &Client,
     organisation_id: &str,
     opts: &Opts,
-) -> Result<Function, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Function, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions",
         client.endpoint
@@ -213,16 +210,13 @@ where
         .map_err(|err| Error::Create(organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the function information of the organisation
-pub async fn get<C>(
-    client: &Client<C>,
+pub async fn get(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
-) -> Result<Function, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Function, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
         client.endpoint
@@ -241,17 +235,14 @@ where
         .map_err(|err| Error::Get(function_id.to_string(), organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// Update the function information of the organisation
-pub async fn update<C>(
-    client: &Client<C>,
+pub async fn update(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
     opts: &Opts,
-) -> Result<Function, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<Function, Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
         client.endpoint
@@ -270,16 +261,13 @@ where
         .map_err(|err| Error::Update(function_id.to_string(), organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the function information of the organisation
-pub async fn delete<C>(
-    client: &Client<C>,
+pub async fn delete(
+    client: &Client,
     organisation_id: &str,
     function_id: &str,
-) -> Result<(), Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+) -> Result<(), Error> {
     let path = format!(
         "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
         client.endpoint
@@ -298,22 +286,18 @@ where
         .map_err(|err| Error::Delete(function_id.to_string(), organisation_id.to_string(), err))
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// Execute a GET HTTP request on the given endpoint
-pub async fn execute<C>(client: &Client<C>, endpoint: &str) -> Result<ExecutionResult, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
-    let req = Request::builder()
-        .method(Method::GET)
-        .uri(endpoint)
-        .body(Body::empty())
-        .map_err(Error::Request)?;
+pub async fn execute(client: &Client, endpoint: &str) -> Result<ExecutionResult, Error> {
+    let req = reqwest::Request::new(
+        Method::GET,
+        endpoint
+            .parse()
+            .map_err(|err| Error::ParseUrl(endpoint.to_string(), err))?,
+    );
 
-    let res = client.inner().request(req).await.map_err(Error::Execute)?;
-    let buf = hyper::body::aggregate(res.into_body())
-        .await
-        .map_err(Error::BodyAggregation)?;
+    let res = client.inner().execute(req).await.map_err(Error::Execute)?;
+    let buf = res.bytes().await.map_err(Error::BodyAggregation)?;
 
     serde_json::from_reader(buf.reader()).map_err(Error::Deserialize)
 }

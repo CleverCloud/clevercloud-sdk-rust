@@ -5,10 +5,7 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use clap::Subcommand;
 use clevercloud_sdk::{
-    oauth10a::{
-        proxy::{self, ProxyConnectorBuilder},
-        Credentials,
-    },
+    oauth10a::{reqwest, Credentials},
     v4::functions,
     Client,
 };
@@ -34,8 +31,8 @@ pub const DEFAULT_MAX_MEMORY: u64 = 64 * 1024 * 1024;
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
-    #[error("failed to build proxy connector, {0}")]
-    ProxyConnector(proxy::Error),
+    #[error("failed to create http client, {0}")]
+    CreateClient(reqwest::Error),
     #[error("failed to list functions of organisation '{0}', {1}")]
     List(String, functions::Error),
     #[error("failed to create function on organisation '{0}', {1}")]
@@ -257,11 +254,7 @@ pub async fn list(
     output: &Output,
     organisation_id: &str,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
+    let client = Client::from(config.credentials.to_owned());
 
     let functionz = functions::list(&client, organisation_id)
         .await
@@ -283,11 +276,7 @@ pub async fn create(
     organisation_id: &str,
     opts: &functions::Opts,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
+    let client = Client::from(config.credentials.to_owned());
 
     let function = functions::create(&client, organisation_id, opts)
         .await
@@ -309,11 +298,7 @@ pub async fn get(
     organisation_id: &str,
     function_id: &str,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
+    let client = Client::from(config.credentials.to_owned());
 
     let function = functions::get(&client, organisation_id, function_id)
         .await
@@ -336,12 +321,7 @@ pub async fn update(
     function_id: &str,
     opts: &functions::Opts,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
-
+    let client = Client::from(config.credentials.to_owned());
     let function = functions::update(&client, organisation_id, function_id, opts)
         .await
         .map_err(|err| Error::Update(function_id.to_string(), organisation_id.to_string(), err))?;
@@ -361,11 +341,7 @@ pub async fn delete(
     organisation_id: &str,
     function_id: &str,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
+    let client = Client::from(config.credentials.to_owned());
 
     functions::delete(&client, organisation_id, function_id)
         .await
@@ -378,12 +354,7 @@ pub async fn execute(
     organisation_id: &str,
     function_id: &str,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
-
+    let client = Client::from(config.credentials.to_owned());
     info!(
         organisation_id = organisation_id,
         function_id = function_id,

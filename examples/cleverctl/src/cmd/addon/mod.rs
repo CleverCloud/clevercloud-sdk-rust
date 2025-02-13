@@ -5,10 +5,7 @@ use std::sync::Arc;
 
 use clap::Subcommand;
 use clevercloud_sdk::{
-    oauth10a::{
-        proxy::{self, ProxyConnectorBuilder},
-        Credentials,
-    },
+    oauth10a::{reqwest, Credentials},
     v2::addon,
     Client,
 };
@@ -31,8 +28,8 @@ pub enum Error {
     List(String, addon::Error),
     #[error("failed to get addon '{0}' of organisation '{1}', {2}")]
     Get(String, String, addon::Error),
-    #[error("failed to build proxy connector, {0}")]
-    ProxyConnector(proxy::Error),
+    #[error("failed to create http client, {0}")]
+    CreateClient(reqwest::Error),
     #[error("failed to execute command on config-provider addon, {0}")]
     ConfigProvider(config_provider::Error),
 }
@@ -95,12 +92,7 @@ pub async fn list(
     output: &Output,
     organisation_id: &str,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
-
+    let client = Client::from(config.credentials.to_owned());
     let addons = addon::list(&client, organisation_id)
         .await
         .map_err(|err| Error::List(organisation_id.to_owned(), err))?;
@@ -120,12 +112,7 @@ pub async fn get(
     organisation_id: &str,
     addon_id: &str,
 ) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
-
+    let client = Client::from(config.credentials.to_owned());
     let addons = addon::get(&client, organisation_id, addon_id)
         .await
         .map_err(|err| Error::Get(addon_id.to_owned(), organisation_id.to_owned(), err))?;

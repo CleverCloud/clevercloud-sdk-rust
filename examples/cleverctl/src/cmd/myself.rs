@@ -5,10 +5,7 @@ use std::sync::Arc;
 
 use clap::Subcommand;
 use clevercloud_sdk::{
-    oauth10a::{
-        proxy::{self, ProxyConnectorBuilder},
-        Credentials,
-    },
+    oauth10a::{reqwest, Credentials},
     v2::myself,
     Client,
 };
@@ -27,8 +24,8 @@ pub enum Error {
     FormatOutput(Box<cmd::Error>),
     #[error("failed to get current user information, {0}")]
     Get(myself::Error),
-    #[error("failed to build proxy connector, {0}")]
-    ProxyConnector(proxy::Error),
+    #[error("failed to create http client, {0}")]
+    CreateClient(reqwest::Error),
 }
 
 // -----------------------------------------------------------------------------
@@ -57,12 +54,7 @@ impl Executor for Command {
 }
 
 pub async fn get(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
-    let credentials: Credentials = config.credentials.to_owned().into();
-    let connector = ProxyConnectorBuilder::try_from_env().map_err(Error::ProxyConnector)?;
-    let client = Client::builder()
-        .with_credentials(credentials)
-        .build(connector);
-
+    let client = Client::from(config.credentials.to_owned());
     let user = myself::get(&client).await.map_err(Error::Get)?;
 
     println!(

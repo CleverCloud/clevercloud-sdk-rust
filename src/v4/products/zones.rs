@@ -4,7 +4,6 @@
 
 use std::fmt::Debug;
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -57,12 +56,9 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // List zones
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the list of zones availables
-pub async fn list<C>(client: &Client<C>) -> Result<Vec<Zone>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn list(client: &Client) -> Result<Vec<Zone>, Error> {
     let path = format!("{}/v4/products/zones", client.endpoint);
 
     #[cfg(feature = "logging")]
@@ -73,12 +69,9 @@ where
     client.get(&path).await.map_err(Error::List)
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// applications returns the list of zones availables for applications and addons
-pub async fn applications<C>(client: &Client<C>) -> Result<Vec<Zone>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn applications(client: &Client) -> Result<Vec<Zone>, Error> {
     Ok(list(client)
         .await?
         .iter()
@@ -87,13 +80,10 @@ where
         .collect())
 }
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// hds returns the list of zones availables for applications and addons with
 /// hds certification
-pub async fn hds<C>(client: &Client<C>) -> Result<Vec<Zone>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn hds(client: &Client) -> Result<Vec<Zone>, Error> {
     Ok(list(client)
         .await?
         .iter()
