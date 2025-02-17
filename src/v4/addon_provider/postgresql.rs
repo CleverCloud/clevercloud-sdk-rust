@@ -2,6 +2,7 @@
 //!
 //! This module provide helpers and structures to interact with the postgresql
 //! addon provider
+#![allow(deprecated)]
 
 use std::{
     convert::TryFrom,
@@ -9,7 +10,6 @@ use std::{
     str::FromStr,
 };
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -41,11 +41,13 @@ pub enum Error {
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
-    V15 = 15,
-    V14 = 14,
-    V13 = 13,
-    V12 = 12,
+    #[deprecated]
+    V10 = 10,
     V11 = 11,
+    V12 = 12,
+    V13 = 13,
+    V14 = 14,
+    V15 = 15,
 }
 
 impl FromStr for Version {
@@ -53,11 +55,12 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "15" => Self::V15,
+            "15" => Self::V14,
             "14" => Self::V14,
             "13" => Self::V13,
             "12" => Self::V12,
             "11" => Self::V11,
+            "10" => Self::V10,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -81,13 +84,14 @@ impl Into<String> for Version {
 }
 
 impl Display for Version {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::V15 => write!(f, "15"),
             Self::V14 => write!(f, "14"),
             Self::V13 => write!(f, "13"),
             Self::V12 => write!(f, "12"),
             Self::V11 => write!(f, "11"),
+            Self::V10 => write!(f, "10"),
         }
     }
 }
@@ -95,12 +99,9 @@ impl Display for Version {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns information about the postgresql addon provider
-pub async fn get<C>(client: &Client<C>) -> Result<AddonProvider<Version>, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
     let path = format!(
         "{}/v4/addon-providers/{}",
         client.endpoint,

@@ -1,6 +1,6 @@
 ---
 name: Continuous integration
-on: [ push, pull_request ]
+on: [push, pull_request]
 jobs:
   build:
     name: Build library
@@ -9,7 +9,7 @@ jobs:
       fail-fast: true
       matrix:
         rust:
-          - 1.77.0
+          - 1.84.1
           - stable
           - beta
           - nightly
@@ -23,7 +23,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --verbose --features metrics --features jsonschemas --features trace --features tokio
+          args: --verbose --features metrics --features jsonschemas --features tracing --features tokio
   test:
     name: Test library
     runs-on: ubuntu-latest
@@ -31,7 +31,7 @@ jobs:
       fail-fast: true
       matrix:
         rust:
-          - 1.77.0
+          - 1.84.1
           - stable
           - beta
           - nightly
@@ -79,7 +79,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --verbose --features metrics --features jsonschemas --features trace --features tokio -- -D warnings
+          args: --verbose --features metrics --features jsonschemas --features tracing --features tokio -- -D warnings
   doc:
     name: Build documentation
     runs-on: ubuntu-latest
@@ -93,5 +93,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --verbose --features metrics --features jsonschemas --features trace --features tokio
-...
+          args: --verbose --features metrics --features jsonschemas --features tracing --features tokio

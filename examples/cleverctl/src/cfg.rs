@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use clevercloud_sdk::oauth10a::Credentials as CleverCloudCredentials;
+use clevercloud_sdk::oauth10a::Credentials;
 use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
 
@@ -19,33 +19,6 @@ pub enum Error {
     LoadDefaultConfiguration(ConfigError),
     #[error("failed to cast configuration, {0}")]
     Cast(ConfigError),
-}
-
-// -----------------------------------------------------------------------------
-// Credentials structure
-
-#[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
-pub struct Credentials {
-    #[serde(rename = "token")]
-    pub token: String,
-    #[serde(rename = "secret")]
-    pub secret: String,
-    #[serde(rename = "consumerKey")]
-    pub consumer_key: String,
-    #[serde(rename = "consumerSecret")]
-    pub consumer_secret: String,
-}
-
-#[allow(clippy::from_over_into)]
-impl Into<CleverCloudCredentials> for Credentials {
-    fn into(self) -> CleverCloudCredentials {
-        CleverCloudCredentials {
-            token: self.token,
-            secret: self.secret,
-            consumer_key: self.consumer_key,
-            consumer_secret: self.consumer_secret,
-        }
-    }
 }
 
 // -----------------------------------------------------------------------------
@@ -72,7 +45,7 @@ impl TryFrom<&PathBuf> for Configuration {
 
 impl Configuration {
     pub fn try_default() -> Result<Self, Error> {
-        let paths = vec![
+        let paths = [
             format!("/usr/share/{}/config", env!("CARGO_PKG_NAME")),
             format!("/etc/{}/config", env!("CARGO_PKG_NAME")),
             format!(
@@ -93,8 +66,7 @@ impl Configuration {
             .add_source(
                 paths
                     .iter()
-                    .map(PathBuf::from)
-                    .map(|path| File::from(path).required(false))
+                    .map(|path| File::with_name(path).required(false))
                     .collect::<Vec<_>>(),
             )
             .build()

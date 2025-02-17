@@ -3,46 +3,40 @@ name = "clevercloud-sdk"
 description = "A rust client and structures to interact with the Clever-Cloud API."
 version = "0.11.1"
 edition = "2021"
-rust-version = "1.77.0"
+rust-version = "1.84.1"
 authors = ["Florentin Dubois <florentin.dubois@clever-cloud.com>"]
 license-file = "LICENSE"
 readme = "README.md"
 repository = "https://github.com/CleverCloud/clevercloud-sdk-rust"
-keywords = [
-    "clevercloud",
-    "sdk",
-    "logging",
-    "metrics",
-    "jsonschemas",
-]
+keywords = ["clevercloud", "sdk", "logging", "metrics", "jsonschemas"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "^0.1.72"
-chrono = { version = "^0.4.26", features = ["serde"] }
-oauth10a = "^1.5.1"
-log = { version = "^0.4.19", optional = true }
-hyper = { version = "^0.14.27", default-features = false }
-schemars = { version = "^0.8.12", features = [
+async-trait = "^0.1.86"
+chrono = { version = "^0.4.39", features = ["serde"] }
+oauth10a = { version = "^2.0.0", default-features = false, features = [
+    "client",
+] }
+log = { version = "^0.4.25", optional = true }
+schemars = { version = "^0.8.21", features = [
     "chrono",
     "indexmap1",
     "uuid1",
     "bytes",
     "url",
 ], optional = true }
-serde = { version = "^1.0.179", features = ["derive"] }
-serde_repr = "^0.1.16"
-serde_json = "^1.0.104"
-thiserror = "^1.0.44"
-tracing = { version = "^0.1.37", optional = true }
-tracing-futures = { version = "^0.2.5", optional = true }
-uuid = { version = "^1.4.1", features = ["serde", "v4"] }
+serde = { version = "^1.0.217", features = ["derive"] }
+serde_repr = "^0.1.19"
+serde_json = "^1.0.138"
+thiserror = "^2.0.11"
+tracing = { version = "^0.1.41", optional = true }
+uuid = { version = "^1.13.1", features = ["serde", "v4"] }
 
 [features]
 default = ["logging"]
 jsonschemas = ["schemars"]
 logging = ["oauth10a/logging", "tracing/log-always", "log"]
 metrics = ["oauth10a/metrics"]
-trace = ["oauth10a/trace", "tracing", "tracing-futures"]
-tokio = ["oauth10a/tokio", "tracing-futures/tokio"]
+tracing = ["oauth10a/tracing", "dep:tracing"]
+tokio = ["oauth10a/tokio"]

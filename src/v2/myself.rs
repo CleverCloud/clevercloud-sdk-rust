@@ -5,7 +5,6 @@
 
 use std::fmt::Debug;
 
-use hyper::client::connect::Connect;
 #[cfg(feature = "logging")]
 use log::{debug, log_enabled, Level};
 use oauth10a::client::{ClientError, RestClient};
@@ -67,12 +66,9 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Helpers functions
 
-#[cfg_attr(feature = "trace", tracing::instrument)]
+#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns information about the person logged in
-pub async fn get<C>(client: &Client<C>) -> Result<Myself, Error>
-where
-    C: Connect + Clone + Debug + Send + Sync + 'static,
-{
+pub async fn get(client: &Client) -> Result<Myself, Error> {
     let path = format!("{}/v2/self", client.endpoint);
 
     #[cfg(feature = "logging")]

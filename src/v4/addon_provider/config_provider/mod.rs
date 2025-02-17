@@ -1,6 +1,6 @@
 //! # ConfigProvider addon provider module
 //!
-//! This module provide helpers and structures to interact with the config
+//! This module provides helpers and structures to interact with the config
 //! provider addon provider
 
 pub mod addon;

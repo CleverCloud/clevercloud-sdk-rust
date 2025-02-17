@@ -93,6 +93,7 @@ pub enum AddonProviderId {
     MySql,
     MongoDb,
     Pulsar,
+    KV,
     ConfigProvider,
     ElasticSearch,
 }
@@ -100,7 +101,7 @@ pub enum AddonProviderId {
 impl FromStr for AddonProviderId {
     type Err = Error;
 
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s.to_lowercase().as_str() {
             "mysql-addon" => Self::MySql,
@@ -110,6 +111,7 @@ impl FromStr for AddonProviderId {
             "addon-pulsar" => Self::Pulsar,
             "config-provider" => Self::ConfigProvider,
             "es-addon" => Self::ElasticSearch,
+            "kv" => Self::KV,
             _ => return Err(Error::Parse(s.to_owned())),
         })
     }
@@ -118,7 +120,7 @@ impl FromStr for AddonProviderId {
 impl TryFrom<String> for AddonProviderId {
     type Error = Error;
 
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(&s)
     }
@@ -126,7 +128,7 @@ impl TryFrom<String> for AddonProviderId {
 
 #[allow(clippy::from_over_into)]
 impl Into<String> for AddonProviderId {
-    #[cfg_attr(feature = "trace", tracing::instrument)]
+    #[cfg_attr(feature = "tracing", tracing::instrument)]
     fn into(self) -> String {
         self.to_string()
     }
@@ -142,6 +144,7 @@ impl Display for AddonProviderId {
             Self::Pulsar => write!(f, "addon-pulsar"),
             Self::ConfigProvider => write!(f, "config-provider"),
             Self::ElasticSearch => write!(f, "es-addon"),
+            Self::KV => write!(f, "kv"),
         }
     }
 }
