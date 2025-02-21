@@ -77,7 +77,9 @@ where
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse addon provider identifier {0}, available options are 'addon-pulsar', 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'")]
+    #[error(
+        "failed to parse addon provider identifier {0}, available options are 'addon-pulsar', 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'"
+    )]
     Parse(String),
 }
 

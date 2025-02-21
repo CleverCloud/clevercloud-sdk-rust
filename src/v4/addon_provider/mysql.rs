@@ -10,15 +10,15 @@ use std::{
 };
 
 #[cfg(feature = "logging")]
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
 
 use crate::{
-    v4::addon_provider::{AddonProvider, AddonProviderId},
     Client,
+    v4::addon_provider::{AddonProvider, AddonProviderId},
 };
 
 // -----------------------------------------------------------------------------
@@ -99,7 +99,11 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about the mysql addon-provider, path: '{}', name: '{}'", &path, AddonProviderId::MySql);
+        debug!(
+            "execute a request to get information about the mysql addon-provider, path: '{}', name: '{}'",
+            &path,
+            AddonProviderId::MySql
+        );
     }
 
     client

@@ -4,11 +4,7 @@
 use std::sync::Arc;
 
 use clap::Subcommand;
-use clevercloud_sdk::{
-    oauth10a::{reqwest, Credentials},
-    v2::myself,
-    Client,
-};
+use clevercloud_sdk::{Client, oauth10a::reqwest, v2::myself};
 
 use crate::{
     cfg::Configuration,

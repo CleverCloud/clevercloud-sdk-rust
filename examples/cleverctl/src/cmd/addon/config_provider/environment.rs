@@ -2,9 +2,9 @@ use std::{path::PathBuf, sync::Arc};
 
 use clap::Subcommand;
 use clevercloud_sdk::{
-    oauth10a::{reqwest, Credentials},
-    v4::addon_provider::config_provider::addon::environment::{self, Variable},
     Client,
+    oauth10a::reqwest,
+    v4::addon_provider::config_provider::addon::environment::{self, Variable},
 };
 use tokio::{fs, task::spawn_blocking as blocking};
 
