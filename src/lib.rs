@@ -55,9 +55,9 @@ impl Builder {
             Some(endpoint) => endpoint,
             None => {
                 if matches!(self.credentials, Some(Credentials::Bearer { .. })) {
-                    PUBLIC_ENDPOINT.to_string()
-                } else {
                     PUBLIC_OAUTHLESS_ENDPOINT.to_string()
+                } else {
+                    PUBLIC_ENDPOINT.to_string()
                 }
             }
         };
@@ -156,8 +156,8 @@ impl From<Credentials> for Client {
     fn from(credentials: Credentials) -> Self {
         match &credentials {
             Credentials::Bearer { .. } => Self::builder()
-                .with_credentials(credentials)
                 .with_endpoint(PUBLIC_OAUTHLESS_ENDPOINT.to_string())
+                .with_credentials(credentials)
                 .build(reqwest::Client::new()),
             _ => Self::builder()
                 .with_credentials(credentials)
@@ -180,10 +180,13 @@ impl Client {
         endpoint: String,
         credentials: Option<Credentials>,
     ) -> Self {
-        Self {
-            inner: OAuthClient::new(client, credentials),
-            endpoint,
+        let mut builder = Self::builder().with_endpoint(endpoint);
+
+        if let Some(credentials) = credentials {
+            builder = builder.with_credentials(credentials);
         }
+
+        builder.build(client)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
