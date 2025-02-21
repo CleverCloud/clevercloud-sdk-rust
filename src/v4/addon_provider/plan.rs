@@ -6,13 +6,13 @@
 use std::fmt::Debug;
 
 #[cfg(feature = "logging")]
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{v2::addon::Feature, v4::addon_provider::AddonProviderId, Client};
+use crate::{Client, v2::addon::Feature, v4::addon_provider::AddonProviderId};
 
 // -----------------------------------------------------------------------------
 // Constants

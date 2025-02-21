@@ -8,14 +8,14 @@ use std::{
 };
 
 use chrono::{DateTime, Utc};
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{
+    ClientError, Request, RestClient,
     reqwest::{
-        self,
-        header::{HeaderValue, CONTENT_LENGTH, CONTENT_TYPE},
-        Body, Method,
+        self, Body, Method,
+        header::{CONTENT_LENGTH, CONTENT_TYPE, HeaderValue},
     },
-    url, ClientError, Request, RestClient,
+    url,
 };
 use serde::{Deserialize, Serialize};
 
@@ -31,9 +31,13 @@ pub const MIME_APPLICATION_WASM: &str = "application/wasm";
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse the webassembly platform '{0}', available values are 'rust', 'javascript' ('js'), 'tiny_go' ('go') and 'assemblyscript'")]
+    #[error(
+        "failed to parse the webassembly platform '{0}', available values are 'rust', 'javascript' ('js'), 'tiny_go' ('go') and 'assemblyscript'"
+    )]
     ParsePlatform(String),
-    #[error("failed to parse the status '{0}', available values are 'waiting_for_upload', 'deploying', 'packaging', 'ready' and 'error'")]
+    #[error(
+        "failed to parse the status '{0}', available values are 'waiting_for_upload', 'deploying', 'packaging', 'ready' and 'error'"
+    )]
     ParseStatus(String),
     #[error("failed to parse endpoint '{0}', {1}")]
     ParseUrl(String, url::ParseError),
@@ -229,7 +233,9 @@ pub async fn list(
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to list deployments for functions, path: '{path}', organisation: '{organisation_id}', function_id: '{function_id}'");
+        debug!(
+            "execute a request to list deployments for functions, path: '{path}', organisation: '{organisation_id}', function_id: '{function_id}'"
+        );
     }
 
     client

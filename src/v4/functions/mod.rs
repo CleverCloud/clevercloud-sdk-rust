@@ -6,11 +6,12 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
 use chrono::{DateTime, Utc};
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{
+    ClientError, RestClient,
     bytes::Buf,
     reqwest::{self, Method},
-    url, ClientError, RestClient,
+    url,
 };
 use serde::{Deserialize, Serialize};
 
@@ -176,7 +177,9 @@ pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Function
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to list functions for organisation, path: '{path}', organisation: '{organisation_id}'");
+        debug!(
+            "execute a request to list functions for organisation, path: '{path}', organisation: '{organisation_id}'"
+        );
     }
 
     client

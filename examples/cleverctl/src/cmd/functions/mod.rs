@@ -4,16 +4,12 @@
 use std::{collections::BTreeMap, sync::Arc};
 
 use clap::Subcommand;
-use clevercloud_sdk::{
-    oauth10a::{reqwest, Credentials},
-    v4::functions,
-    Client,
-};
+use clevercloud_sdk::{Client, oauth10a::reqwest, v4::functions};
 use tracing::info;
 
 use crate::{
     cfg::Configuration,
-    cmd::{self, parse_btreemap, Executor, Output},
+    cmd::{self, Executor, Output, parse_btreemap},
 };
 
 pub mod deployments;
@@ -47,7 +43,9 @@ pub enum Error {
     DeploymentCommand(deployments::Error),
     #[error("failed to list deployments of function '{0}' on organisation '{1}', {2}")]
     ListDeployment(String, String, functions::deployments::Error),
-    #[error("failed to execute function '{0}' of organisation '{1}', there is no such deployment to execute")]
+    #[error(
+        "failed to execute function '{0}' of organisation '{1}', there is no such deployment to execute"
+    )]
     NoSuchDeployment(String, String),
     #[error(
         "failed to execute request on endpoint '{0}' of deployment '{1}' for function '{2}', {3}"

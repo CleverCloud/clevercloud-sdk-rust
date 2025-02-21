@@ -6,13 +6,13 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
 #[cfg(feature = "logging")]
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{v4::addon_provider::config_provider::addon::environment::Variable, Client};
+use crate::{Client, v4::addon_provider::config_provider::addon::environment::Variable};
 
 // -----------------------------------------------------------------------------
 // Provider structure
@@ -198,7 +198,10 @@ pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Add
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about an addon, path: '{}', organisation: '{}', id: '{}'", &path, organisation_id, id);
+        debug!(
+            "execute a request to get information about an addon, path: '{}', organisation: '{}', id: '{}'",
+            &path, organisation_id, id
+        );
     }
 
     client
@@ -221,7 +224,15 @@ pub async fn create(
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to create an addon, path: '{}', organisation: '{}', name: '{}', region: '{}', plan: '{}', provider-id: '{}'", &path, organisation_id, &opts.name, &opts.region, &opts.plan, &opts.provider_id.to_string());
+        debug!(
+            "execute a request to create an addon, path: '{}', organisation: '{}', name: '{}', region: '{}', plan: '{}', provider-id: '{}'",
+            &path,
+            organisation_id,
+            &opts.name,
+            &opts.region,
+            &opts.plan,
+            &opts.provider_id.to_string()
+        );
     }
 
     client

@@ -8,7 +8,7 @@ use clap::Subcommand;
 
 use crate::{
     cfg::Configuration,
-    cmd::{addon::config_provider::environment::Environment, Executor},
+    cmd::{Executor, addon::config_provider::environment::Environment},
 };
 
 pub mod environment;

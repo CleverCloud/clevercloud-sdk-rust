@@ -4,15 +4,11 @@
 use std::sync::Arc;
 
 use clap::Subcommand;
-use clevercloud_sdk::{
-    oauth10a::{reqwest, Credentials},
-    v2::addon,
-    Client,
-};
+use clevercloud_sdk::{Client, oauth10a::reqwest, v2::addon};
 
 use crate::{
     cfg::Configuration,
-    cmd::{self, addon::config_provider::ConfigProvider, Executor, Output},
+    cmd::{self, Executor, Output, addon::config_provider::ConfigProvider},
 };
 
 pub mod config_provider;

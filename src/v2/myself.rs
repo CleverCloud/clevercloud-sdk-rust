@@ -6,7 +6,7 @@
 use std::fmt::Debug;
 
 #[cfg(feature = "logging")]
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;

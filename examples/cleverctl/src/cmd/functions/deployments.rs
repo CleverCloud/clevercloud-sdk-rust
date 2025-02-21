@@ -7,16 +7,16 @@ use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
 use clap::Subcommand;
 use clevercloud_sdk::{
-    oauth10a::{reqwest, Credentials},
-    v4::functions::deployments::{self, Opts, Platform},
     Client,
+    oauth10a::reqwest,
+    v4::functions::deployments::{self, Opts, Platform},
 };
 use tokio::fs::read;
 use tracing::info;
 
 use crate::{
     cfg::Configuration,
-    cmd::{self, parse_btreemap, Executor, Output},
+    cmd::{self, Executor, Output, parse_btreemap},
 };
 
 // ----------------------------------------------------------------------------
@@ -38,7 +38,9 @@ pub enum Error {
     Delete(String, String, String, deployments::Error),
     #[error("failed to read file '{0}', {1}")]
     Read(String, std::io::Error),
-    #[error("failed to upload file located at '{0}' for deployment '{1}' of function '{2}' on organisation '{3}', {4}")]
+    #[error(
+        "failed to upload file located at '{0}' for deployment '{1}' of function '{2}' on organisation '{3}', {4}"
+    )]
     Upload(String, String, String, String, deployments::Error),
     #[error("failed to trigger deployment '{0}' of function '{1}' for organisation '{2}', {3}")]
     Trigger(String, String, String, deployments::Error),

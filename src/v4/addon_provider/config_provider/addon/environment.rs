@@ -6,13 +6,13 @@
 use std::{collections::HashMap, fmt::Debug};
 
 #[cfg(feature = "logging")]
-use log::{debug, log_enabled, Level};
+use log::{Level, debug, log_enabled};
 use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{v4::addon_provider::AddonProviderId, Client};
+use crate::{Client, v4::addon_provider::AddonProviderId};
 
 // -----------------------------------------------------------------------------
 // Variable structure
@@ -66,7 +66,10 @@ pub async fn get(client: &Client, id: &str) -> Result<Vec<Variable>, Error> {
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to get information about the config-provider addon, path: '{}', id: '{}'", &path, id);
+        debug!(
+            "execute a request to get information about the config-provider addon, path: '{}', id: '{}'",
+            &path, id
+        );
     }
 
     client
@@ -91,7 +94,10 @@ pub async fn put(
 
     #[cfg(feature = "logging")]
     if log_enabled!(Level::Debug) {
-        debug!("execute a request to update information about the config-provider addon, path: '{}', id: '{}'", &path, id);
+        debug!(
+            "execute a request to update information about the config-provider addon, path: '{}', id: '{}'",
+            &path, id
+        );
     }
 
     client

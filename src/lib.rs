@@ -6,11 +6,11 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use serde::{de::DeserializeOwned, Serialize};
+use serde::{Serialize, de::DeserializeOwned};
 
 use crate::oauth10a::{
-    reqwest::{self, Method},
     Client as OAuthClient, ClientError, Credentials, Request, RestClient,
+    reqwest::{self, Method},
 };
 
 pub mod v2;
