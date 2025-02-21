@@ -6,10 +6,10 @@
 use std::fmt::Debug;
 
 use async_trait::async_trait;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::oauth10a::{
-    Client as OAuthClient, ClientError, Credentials, Request, RestClient,
+    Client as OAuthClient, ClientError, Request, RestClient,
     reqwest::{self, Method},
 };
 
@@ -26,6 +26,137 @@ pub use oauth10a::client as oauth10a;
 
 pub const PUBLIC_ENDPOINT: &str = "https://api.clever-cloud.com";
 pub const PUBLIC_OAUTHLESS_ENDPOINT: &str = "https://oauthless-api.clever-cloud.com";
+
+// Consumer key and secret reported here are one from the clever-tools and is
+// available publicly.
+// the disclosure of these tokens is not considered as a vulnerability.
+// Do not report this to our security service.
+//
+// See:
+// - <https://github.com/CleverCloud/clever-tools/blob/fed085e2ba0339f55e966d7c8c6439d4dac71164/src/models/configuration.js#L128>
+pub const DEFAULT_CONSUMER_KEY: &str = "T5nFjKeHH4AIlEveuGhB5S3xg8T19e";
+pub fn default_consumer_key() -> String {
+    DEFAULT_CONSUMER_KEY.to_string()
+}
+
+pub const DEFAULT_CONSUMER_SECRET: &str = "MgVMqTr6fWlf2M0tkC2MXOnhfqBWDT";
+pub fn default_consumer_secret() -> String {
+    DEFAULT_CONSUMER_SECRET.to_string()
+}
+
+// -----------------------------------------------------------------------------
+// Credentials structure
+
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[serde(untagged)]
+pub enum Credentials {
+    OAuth1 {
+        #[serde(rename = "token")]
+        token: String,
+        #[serde(rename = "secret")]
+        secret: String,
+        #[serde(rename = "consumer-key", default = "default_consumer_key")]
+        consumer_key: String,
+        #[serde(rename = "consumer-secret", default = "default_consumer_secret")]
+        consumer_secret: String,
+    },
+    Basic {
+        #[serde(rename = "username")]
+        username: String,
+        #[serde(rename = "password")]
+        password: String,
+    },
+    Bearer {
+        #[serde(rename = "token")]
+        token: String,
+    },
+}
+
+impl Default for Credentials {
+    #[tracing::instrument(skip_all)]
+    fn default() -> Self {
+        Self::OAuth1 {
+            token: String::new(),
+            secret: String::new(),
+            consumer_key: DEFAULT_CONSUMER_KEY.to_string(),
+            consumer_secret: DEFAULT_CONSUMER_SECRET.to_string(),
+        }
+    }
+}
+
+impl From<oauth10a::Credentials> for Credentials {
+    #[tracing::instrument(skip_all)]
+    fn from(credentials: oauth10a::Credentials) -> Self {
+        match credentials {
+            oauth10a::Credentials::Bearer { token } => Self::Bearer { token },
+            oauth10a::Credentials::Basic { username, password } => {
+                Self::Basic { username, password }
+            }
+            oauth10a::Credentials::OAuth1 {
+                token,
+                secret,
+                consumer_key,
+                consumer_secret,
+            } => Self::OAuth1 {
+                token,
+                secret,
+                consumer_key,
+                consumer_secret,
+            },
+        }
+    }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<oauth10a::Credentials> for Credentials {
+    #[tracing::instrument(skip_all)]
+    fn into(self) -> oauth10a::Credentials {
+        match self {
+            Self::Bearer { token } => oauth10a::Credentials::Bearer { token },
+            Self::Basic { username, password } => {
+                oauth10a::Credentials::Basic { username, password }
+            }
+            Self::OAuth1 {
+                token,
+                secret,
+                consumer_key,
+                consumer_secret,
+            } => oauth10a::Credentials::OAuth1 {
+                token,
+                secret,
+                consumer_key,
+                consumer_secret,
+            },
+        }
+    }
+}
+
+impl Credentials {
+    #[tracing::instrument(skip_all)]
+    pub fn bearer(token: String) -> Self {
+        Self::Bearer { token }
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub fn basic(username: String, password: String) -> Self {
+        Self::Basic { username, password }
+    }
+
+    #[tracing::instrument(skip_all)]
+    pub fn oauth1(
+        token: String,
+        secret: String,
+        consumer_key: String,
+        consumer_secret: String,
+    ) -> Self {
+        Self::OAuth1 {
+            token,
+            secret,
+            consumer_key,
+            consumer_secret,
+        }
+    }
+}
 
 // -----------------------------------------------------------------------------
 // Builder structure
@@ -62,7 +193,10 @@ impl Builder {
             }
         };
 
-        Client::new(client, endpoint, self.credentials)
+        Client {
+            inner: OAuthClient::new(client, self.credentials.map(Into::into)),
+            endpoint,
+        }
     }
 }
 
@@ -201,7 +335,7 @@ impl Client {
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     pub fn set_credentials(&mut self, credentials: Option<Credentials>) {
-        self.inner.set_credentials(credentials);
+        self.inner.set_credentials(credentials.map(Into::into));
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]

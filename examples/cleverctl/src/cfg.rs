@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use clevercloud_sdk::oauth10a::Credentials;
+use clevercloud_sdk::Credentials;
 use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
 
@@ -26,7 +26,7 @@ pub enum Error {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
 pub struct Configuration {
-    #[serde(rename = "credentials")]
+    #[serde(rename = "credentials", flatten)]
     pub credentials: Credentials,
 }
 
@@ -45,20 +45,18 @@ impl TryFrom<&PathBuf> for Configuration {
 
 impl Configuration {
     pub fn try_default() -> Result<Self, Error> {
+        let homedir = std::env::var("HOME").unwrap_or_else(|_| "/root".to_string());
         let paths = [
             format!("/usr/share/{}/config", env!("CARGO_PKG_NAME")),
             format!("/etc/{}/config", env!("CARGO_PKG_NAME")),
             format!(
                 "{}/.local/usr/share/{}/config",
-                env!("HOME"),
+                homedir,
                 env!("CARGO_PKG_NAME")
             ),
-            format!(
-                "{}/.local/etc/{}/config",
-                env!("HOME"),
-                env!("CARGO_PKG_NAME")
-            ),
-            format!("{}/.config/{}/config", env!("HOME"), env!("CARGO_PKG_NAME")),
+            format!("{}/.local/etc/{}/config", homedir, env!("CARGO_PKG_NAME")),
+            format!("{}/.config/{}/config", homedir, env!("CARGO_PKG_NAME")),
+            format!("{}/.config/clever-cloud/clever-tools", homedir),
             "config".to_string(),
         ];
 
