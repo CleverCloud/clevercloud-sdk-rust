@@ -25,7 +25,7 @@ pub use oauth10a::client as oauth10a;
 // Constants
 
 pub const PUBLIC_ENDPOINT: &str = "https://api.clever-cloud.com";
-pub const PUBLIC_OAUTHLESS_ENDPOINT: &str = "https://oauthless-api.clever-cloud.com";
+pub const PUBLIC_API_BRIDGE_ENDPOINT: &str = "https://api-bridge.clever-cloud.com";
 
 // Consumer key and secret reported here are one from the clever-tools and is
 // available publicly.
@@ -186,7 +186,7 @@ impl Builder {
             Some(endpoint) => endpoint,
             None => {
                 if matches!(self.credentials, Some(Credentials::Bearer { .. })) {
-                    PUBLIC_OAUTHLESS_ENDPOINT.to_string()
+                    PUBLIC_API_BRIDGE_ENDPOINT.to_string()
                 } else {
                     PUBLIC_ENDPOINT.to_string()
                 }
@@ -290,7 +290,7 @@ impl From<Credentials> for Client {
     fn from(credentials: Credentials) -> Self {
         match &credentials {
             Credentials::Bearer { .. } => Self::builder()
-                .with_endpoint(PUBLIC_OAUTHLESS_ENDPOINT.to_string())
+                .with_endpoint(PUBLIC_API_BRIDGE_ENDPOINT.to_string())
                 .with_credentials(credentials)
                 .build(reqwest::Client::new()),
             _ => Self::builder()
