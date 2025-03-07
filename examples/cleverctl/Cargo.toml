@@ -9,20 +9,20 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "^0.1.86"
+async-trait = "^0.1.87"
 clevercloud-sdk = { path = "../..", features = [
     "tokio",
     "metrics",
     "tracing",
     "jsonschemas",
 ] }
-clap = { version = "^4.5.30", features = ["derive"] }
-config = "0.15.8"
+clap = { version = "^4.5.31", features = ["derive"] }
+config = "0.15.9"
 paw = "^1.0.0"
 serde = { version = "^1.0.218", features = ["derive"] }
-serde_json = "^1.0.139"
+serde_json = "^1.0.140"
 serde_yaml = "^0.9.33"
-thiserror = "^2.0.11"
+thiserror = "^2.0.12"
 tokio = { version = "^1.43.0", features = ["full"] }
 tracing = "^0.1.41"
 tracing-subscriber = { version = "^0.3.19", default-features = false, features = [
