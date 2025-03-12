@@ -78,7 +78,9 @@ where
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(
-        "failed to parse addon provider identifier {0}, available options are 'addon-pulsar', 'postgresql-addon', 'mysql-addon', 'mongodb-addon' or 'redis-addon'"
+        "failed to parse addon provider identifier '{0}', available options are \
+        'postgresql-addon', 'redis-addon', 'mysql-addon', 'mongodb-addon', \
+        'addon-pulsar', 'config-provider', 'es-addon', 'kv' and 'metabase'"
     )]
     Parse(String),
 }
@@ -98,6 +100,7 @@ pub enum AddonProviderId {
     KV,
     ConfigProvider,
     ElasticSearch,
+    Metabase,
 }
 
 impl FromStr for AddonProviderId {
@@ -106,14 +109,15 @@ impl FromStr for AddonProviderId {
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s.to_lowercase().as_str() {
-            "mysql-addon" => Self::MySql,
-            "redis-addon" => Self::Redis,
             "postgresql-addon" => Self::PostgreSql,
+            "redis-addon" => Self::Redis,
+            "mysql-addon" => Self::MySql,
             "mongodb-addon" => Self::MongoDb,
             "addon-pulsar" => Self::Pulsar,
+            "kv" => Self::KV,
             "config-provider" => Self::ConfigProvider,
             "es-addon" => Self::ElasticSearch,
-            "kv" => Self::KV,
+            "metabase" => Self::Metabase,
             _ => return Err(Error::Parse(s.to_owned())),
         })
     }
@@ -144,9 +148,10 @@ impl Display for AddonProviderId {
             Self::MySql => write!(f, "mysql-addon"),
             Self::MongoDb => write!(f, "mongodb-addon"),
             Self::Pulsar => write!(f, "addon-pulsar"),
+            Self::KV => write!(f, "kv"),
             Self::ConfigProvider => write!(f, "config-provider"),
             Self::ElasticSearch => write!(f, "es-addon"),
-            Self::KV => write!(f, "kv"),
+            Self::Metabase => write!(f, "metabase"),
         }
     }
 }
