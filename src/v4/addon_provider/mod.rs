@@ -80,7 +80,7 @@ pub enum Error {
     #[error(
         "failed to parse addon provider identifier '{0}', available options are \
         'postgresql-addon', 'redis-addon', 'mysql-addon', 'mongodb-addon', \
-        'addon-pulsar', 'config-provider', 'es-addon', 'kv' and 'metabase'"
+        'addon-pulsar', 'config-provider', 'es-addon', 'kv', 'metabase' and 'keycloak'"
     )]
     Parse(String),
 }
@@ -101,6 +101,7 @@ pub enum AddonProviderId {
     ConfigProvider,
     ElasticSearch,
     Metabase,
+    Keycloak,
 }
 
 impl FromStr for AddonProviderId {
@@ -118,6 +119,7 @@ impl FromStr for AddonProviderId {
             "config-provider" => Self::ConfigProvider,
             "es-addon" => Self::ElasticSearch,
             "metabase" => Self::Metabase,
+            "keycloack" => Self::Keycloak,
             _ => return Err(Error::Parse(s.to_owned())),
         })
     }
@@ -152,6 +154,7 @@ impl Display for AddonProviderId {
             Self::ConfigProvider => write!(f, "config-provider"),
             Self::ElasticSearch => write!(f, "es-addon"),
             Self::Metabase => write!(f, "metabase"),
+            Self::Keycloak => write!(f, "keycloak"),
         }
     }
 }
