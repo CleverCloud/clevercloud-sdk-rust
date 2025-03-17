@@ -81,7 +81,7 @@ pub enum Error {
         "failed to parse addon provider identifier '{0}', available options are \
         'postgresql-addon', 'redis-addon', 'mysql-addon', 'mongodb-addon', \
         'addon-pulsar', 'config-provider', 'es-addon', 'kv', 'metabase', 'keycloak', \
-        'cellar-addon', and 'addon-matomo'"
+        'cellar-addon', 'addon-matomo', and 'addon-otoroshi'"
     )]
     Parse(String),
 }
@@ -105,6 +105,7 @@ pub enum AddonProviderId {
     Keycloak,
     Cellar,
     Matomo,
+    Otoroshi,
 }
 
 impl FromStr for AddonProviderId {
@@ -126,6 +127,7 @@ impl FromStr for AddonProviderId {
             "cellar-addon" => Self::Cellar,
             "keycloak" => Self::Keycloak,
             "addon-matomo" => Self::Matomo,
+            "otoroshi" => Self::Otoroshi,
             _ => return Err(Error::Parse(s.to_owned())),
         })
     }
@@ -163,6 +165,7 @@ impl Display for AddonProviderId {
             Self::Keycloak => write!(f, "keycloak"),
             Self::Cellar => write!(f, "cellar-addon"),
             Self::Matomo => write!(f, "addon-matomo"),
+            Self::Otoroshi => write!(f, "otoroshi"),
         }
     }
 }
