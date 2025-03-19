@@ -27,7 +27,9 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse version from '{0}', available versions are 15, 14, 13, 12 and 11")]
+    #[error(
+        "failed to parse version from '{0}', available versions are 17, 16, 15, 14, 13, 12 and 11"
+    )]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
     Get(AddonProviderId, ClientError),
@@ -41,13 +43,13 @@ pub enum Error {
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
-    #[deprecated]
-    V10 = 10,
     V11 = 11,
     V12 = 12,
     V13 = 13,
     V14 = 14,
     V15 = 15,
+    V16 = 16,
+    V17 = 17,
 }
 
 impl FromStr for Version {
@@ -55,12 +57,13 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "15" => Self::V14,
+            "17" => Self::V17,
+            "16" => Self::V16,
+            "15" => Self::V15,
             "14" => Self::V14,
             "13" => Self::V13,
             "12" => Self::V12,
             "11" => Self::V11,
-            "10" => Self::V10,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -86,12 +89,13 @@ impl Into<String> for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
+            Self::V17 => write!(f, "17"),
+            Self::V16 => write!(f, "16"),
             Self::V15 => write!(f, "15"),
             Self::V14 => write!(f, "14"),
             Self::V13 => write!(f, "13"),
             Self::V12 => write!(f, "12"),
             Self::V11 => write!(f, "11"),
-            Self::V10 => write!(f, "10"),
         }
     }
 }
