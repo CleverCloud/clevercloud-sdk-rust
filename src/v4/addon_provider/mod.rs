@@ -19,7 +19,6 @@ pub mod config_provider;
 pub mod elasticsearch;
 pub mod mongodb;
 pub mod mysql;
-pub mod plan;
 pub mod postgresql;
 pub mod redis;
 
@@ -109,6 +108,27 @@ pub enum AddonProviderId {
     Azimutt,
 }
 
+impl AddonProviderId {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::PostgreSql => "postgresql-addon",
+            Self::Redis => "redis-addon",
+            Self::MySql => "mysql-addon",
+            Self::MongoDb => "mongodb-addon",
+            Self::Pulsar => "addon-pulsar",
+            Self::KV => "kv",
+            Self::ConfigProvider => "config-provider",
+            Self::ElasticSearch => "es-addon",
+            Self::Metabase => "metabase",
+            Self::Keycloak => "keycloak",
+            Self::Cellar => "cellar-addon",
+            Self::Matomo => "addon-matomo",
+            Self::Otoroshi => "otoroshi",
+            Self::Azimutt => "azimutt",
+        }
+    }
+}
+
 impl FromStr for AddonProviderId {
     type Err = Error;
 
@@ -153,21 +173,6 @@ impl Into<String> for AddonProviderId {
 
 impl Display for AddonProviderId {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match self {
-            Self::PostgreSql => write!(f, "postgresql-addon"),
-            Self::Redis => write!(f, "redis-addon"),
-            Self::MySql => write!(f, "mysql-addon"),
-            Self::MongoDb => write!(f, "mongodb-addon"),
-            Self::Pulsar => write!(f, "addon-pulsar"),
-            Self::KV => write!(f, "kv"),
-            Self::ConfigProvider => write!(f, "config-provider"),
-            Self::ElasticSearch => write!(f, "es-addon"),
-            Self::Metabase => write!(f, "metabase"),
-            Self::Keycloak => write!(f, "keycloak"),
-            Self::Cellar => write!(f, "cellar-addon"),
-            Self::Matomo => write!(f, "addon-matomo"),
-            Self::Otoroshi => write!(f, "otoroshi"),
-            Self::Azimutt => write!(f, "azimutt"),
-        }
+        fmt::Display::fmt(self.as_str(), f)
     }
 }
