@@ -4,3 +4,4 @@
 
 pub mod addon;
 pub mod myself;
+pub mod plan;
