@@ -5,7 +5,6 @@
 
 use std::fmt::Debug;
 
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::oauth10a::{
@@ -209,72 +208,81 @@ pub struct Client {
     endpoint: String,
 }
 
-#[async_trait]
 impl Request for Client {
     type Error = ClientError;
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn request<T, U>(
+    fn request<T, U>(
         &self,
         method: &Method,
         endpoint: &str,
         payload: &T,
-    ) -> Result<U, Self::Error>
+    ) -> impl Future<Output = Result<U, Self::Error>>
     where
         T: Serialize + Debug + Send + Sync,
         U: DeserializeOwned + Debug + Send + Sync,
     {
-        self.inner.request(method, endpoint, payload).await
+        self.inner.request(method, endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn execute(&self, request: reqwest::Request) -> Result<reqwest::Response, Self::Error> {
-        self.inner.execute(request).await
+    fn execute(
+        &self,
+        request: reqwest::Request,
+    ) -> impl Future<Output = Result<reqwest::Response, Self::Error>> {
+        self.inner.execute(request)
     }
 }
 
-#[async_trait]
 impl RestClient for Client {
     type Error = ClientError;
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn get<T>(&self, endpoint: &str) -> Result<T, Self::Error>
+    fn get<T>(&self, endpoint: &str) -> impl Future<Output = Result<T, Self::Error>>
     where
         T: DeserializeOwned + Debug + Send + Sync,
     {
-        self.inner.get(endpoint).await
+        self.inner.get(endpoint)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn post<T, U>(&self, endpoint: &str, payload: &T) -> Result<U, Self::Error>
+    fn post<T, U>(
+        &self,
+        endpoint: &str,
+        payload: &T,
+    ) -> impl Future<Output = Result<U, Self::Error>>
     where
         T: Serialize + Debug + Send + Sync,
         U: DeserializeOwned + Debug + Send + Sync,
     {
-        self.inner.post(endpoint, payload).await
+        self.inner.post(endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn put<T, U>(&self, endpoint: &str, payload: &T) -> Result<U, Self::Error>
+    fn put<T, U>(&self, endpoint: &str, payload: &T) -> impl Future<Output = Result<U, Self::Error>>
     where
         T: Serialize + Debug + Send + Sync,
         U: DeserializeOwned + Debug + Send + Sync,
     {
-        self.inner.put(endpoint, payload).await
+        self.inner.put(endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn patch<T, U>(&self, endpoint: &str, payload: &T) -> Result<U, Self::Error>
+    fn patch<T, U>(
+        &self,
+        endpoint: &str,
+        payload: &T,
+    ) -> impl Future<Output = Result<U, Self::Error>>
     where
         T: Serialize + Debug + Send + Sync,
         U: DeserializeOwned + Debug + Send + Sync,
     {
-        self.inner.patch(endpoint, payload).await
+        self.inner.patch(endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    async fn delete(&self, endpoint: &str) -> Result<(), Self::Error> {
-        self.inner.delete(endpoint).await
+    fn delete(&self, endpoint: &str) -> impl Future<Output = Result<(), Self::Error>> {
+        self.inner.delete(endpoint)
     }
 }
 
