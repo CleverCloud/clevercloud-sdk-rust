@@ -18,7 +18,7 @@ use crate::{Client, v4::addon_provider::config_provider::addon::environment::Var
 // Provider structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
 pub struct Provider {
     #[serde(rename = "id")]
     pub id: String,
@@ -48,6 +48,8 @@ pub struct Provider {
     pub can_upgrade: bool,
     #[serde(rename = "regions")]
     pub regions: Vec<String>,
+    #[serde(default, rename = "plans")]
+    pub plans: Vec<Plan>,
 }
 
 // -----------------------------------------------------------------------------
