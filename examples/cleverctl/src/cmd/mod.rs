@@ -5,6 +5,7 @@
 use std::{
     collections::BTreeMap,
     fmt::{self, Display, Formatter},
+    future::Future,
     path::PathBuf,
     str::FromStr,
     sync::Arc,
@@ -86,14 +87,16 @@ impl Output {
 }
 
 // -----------------------------------------------------------------------------
-// Excutor trait
+// Executor trait
 
 /// Executor trait provides a common way to implement a command
-#[async_trait::async_trait]
 pub trait Executor {
     type Error;
 
-    async fn execute(&self, config: Arc<Configuration>) -> Result<(), Self::Error>;
+    fn execute(
+        &self,
+        config: Arc<Configuration>,
+    ) -> impl Future<Output = Result<(), Self::Error>> + Send;
 }
 
 // -----------------------------------------------------------------------------
@@ -112,7 +115,6 @@ pub enum Command {
     Function(functions::Command),
 }
 
-#[async_trait::async_trait]
 impl Executor for Command {
     type Error = Error;
 

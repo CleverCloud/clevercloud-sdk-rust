@@ -156,7 +156,6 @@ pub enum Command {
     Deployments(deployments::Command),
 }
 
-#[async_trait::async_trait]
 impl Executor for Command {
     type Error = Error;
 

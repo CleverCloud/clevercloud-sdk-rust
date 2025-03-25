@@ -31,7 +31,6 @@ pub enum ConfigProvider {
     Environment(Environment),
 }
 
-#[async_trait::async_trait]
 impl Executor for ConfigProvider {
     type Error = Error;
 
