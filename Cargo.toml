@@ -13,9 +13,8 @@ keywords = ["clevercloud", "sdk", "logging", "metrics", "jsonschemas"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-trait = "^0.1.88"
 chrono = { version = "^0.4.40", features = ["serde"] }
-oauth10a = { version = "^2.0.2", default-features = false, features = [
+oauth10a = { version = "^2.1.0", default-features = false, features = [
     "client",
 ] }
 log = { version = "^0.4.26", optional = true }
