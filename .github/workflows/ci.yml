@@ -23,7 +23,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --verbose --features metrics --features jsonschemas --features tracing --features tokio
+          args: --verbose --features metrics --features jsonschemas --features tracing
   test:
     name: Test library
     runs-on: ubuntu-latest
@@ -79,7 +79,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --verbose --features metrics --features jsonschemas --features tracing --features tokio -- -D warnings
+          args: --verbose --features metrics --features jsonschemas --features tracing -- -D warnings
   doc:
     name: Build documentation
     runs-on: ubuntu-latest
@@ -93,4 +93,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --verbose --features metrics --features jsonschemas --features tracing --features tokio
+          args: --verbose --features metrics --features jsonschemas --features tracing
