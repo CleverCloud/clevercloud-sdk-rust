@@ -14,7 +14,7 @@ keywords = ["clevercloud", "sdk", "logging", "metrics", "jsonschemas"]
 
 [dependencies]
 chrono = { version = "^0.4.40", features = ["serde"] }
-oauth10a = { version = "^2.1.0", default-features = false, features = [
+oauth10a = { version = "^2.1.1", default-features = false, features = [
     "client",
 ] }
 log = { version = "^0.4.26", optional = true }
@@ -38,4 +38,3 @@ jsonschemas = ["schemars"]
 logging = ["oauth10a/logging", "tracing/log-always", "log"]
 metrics = ["oauth10a/metrics"]
 tracing = ["oauth10a/tracing", "dep:tracing"]
-tokio = ["oauth10a/tokio"]
