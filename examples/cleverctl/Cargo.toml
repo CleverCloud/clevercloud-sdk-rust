@@ -3,13 +3,13 @@ name = "cleverctl"
 description = "A command line interface that use the clevercloud-sdk"
 authors = ["Florentin Dubois <florentin.dubois@clever-cloud.com>"]
 rust-version = "1.85.0"
-version = "0.14.0"
+version = "0.15.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clevercloud-sdk = { path = "../..", features = [
+clevercloud-sdk = { version = "0.15.0", path = "../..", features = [
     "metrics",
     "tracing",
     "jsonschemas",
