@@ -60,7 +60,6 @@ pub enum Command {
     ConfigProvider(ConfigProvider),
 }
 
-#[async_trait::async_trait]
 impl Executor for Command {
     type Error = Error;
 

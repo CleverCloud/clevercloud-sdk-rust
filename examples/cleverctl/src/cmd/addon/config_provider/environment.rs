@@ -89,7 +89,6 @@ pub enum Environment {
     },
 }
 
-#[async_trait::async_trait]
 impl Executor for Environment {
     type Error = Error;
 
