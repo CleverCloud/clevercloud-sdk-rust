@@ -10,7 +10,7 @@ use std::{
 use chrono::{DateTime, Utc};
 use log::{Level, debug, log_enabled};
 use oauth10a::client::{
-    ClientError, Request, RestClient,
+    ClientError, Execute, RestClient,
     reqwest::{
         self, Body, Method,
         header::{CONTENT_LENGTH, CONTENT_TYPE, HeaderValue},

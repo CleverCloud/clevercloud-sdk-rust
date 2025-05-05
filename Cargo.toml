@@ -13,11 +13,14 @@ keywords = ["clevercloud", "sdk", "logging", "metrics", "jsonschemas"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = { version = "^0.4.40", features = ["serde"] }
-oauth10a = { version = "^2.1.1", default-features = false, features = [
+base64 = { version = "^0.22.1", optional = true }
+chrono = { version = "^0.4.41", features = ["serde"] }
+oauth10a = { path = "../oauth10a-rust", default-features = false, features = [
     "client",
+    "sse",
 ] }
-log = { version = "^0.4.26", optional = true }
+log = { version = "^0.4.27", optional = true }
+rand_core = { version = "^0.9.3", features = ["os_rng"], optional = true }
 schemars = { version = "^0.8.22", features = [
     "chrono",
     "indexmap1",
@@ -30,11 +33,17 @@ serde_repr = "^0.1.20"
 serde_json = "^1.0.140"
 thiserror = "^2.0.12"
 tracing = { version = "^0.1.41", optional = true }
-uuid = { version = "^1.16.0", features = ["serde", "v4"] }
+uuid = { version = "^1.17.0", features = ["serde", "v4"] }
+x25519-dalek = { version = "^2.0.1", features = [
+    "zeroize",
+    "static_secrets",
+], optional = true }
+zeroize = { version = "^1.8.1", optional = true }
 
 [features]
-default = ["logging"]
+default = ["logging", "network-group"]
 jsonschemas = ["schemars"]
 logging = ["oauth10a/logging", "tracing/log-always", "log"]
 metrics = ["oauth10a/metrics"]
 tracing = ["oauth10a/tracing", "dep:tracing"]
+network-group = ["dep:base64", "x25519-dalek", "zeroize", "rand_core"]

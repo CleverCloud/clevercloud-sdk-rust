@@ -3,5 +3,6 @@
 //! This module expose resources under the version 2 of the Clever-Cloud Api.
 
 pub mod addon;
+pub mod error;
 pub mod myself;
 pub mod plan;

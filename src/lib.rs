@@ -1,14 +1,14 @@
 //! # Clever-Cloud Sdk
 //!
-//! This module provides a client and structures to interact with clever-cloud
-//! api.
+//! This module provides a client and structures to interact with Clever Cloud API.
 
-use std::fmt::Debug;
+use core::fmt;
 
+use ::oauth10a::client::{Execute, reqwest::IntoUrl};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 use crate::oauth10a::{
-    Client as OAuthClient, ClientError, Request, RestClient,
+    Client as OAuthClient, ClientError, RestClient,
     reqwest::{self, Method},
 };
 
@@ -46,7 +46,7 @@ pub fn default_consumer_secret() -> String {
 // -----------------------------------------------------------------------------
 // Credentials structure
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Eq, Clone)]
 #[serde(untagged)]
 pub enum Credentials {
     OAuth1 {
@@ -69,6 +69,16 @@ pub enum Credentials {
         #[serde(rename = "token")]
         token: String,
     },
+}
+
+impl fmt::Debug for Credentials {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OAuth1 { .. } => f.write_str("OAuth1"),
+            Self::Basic { .. } => f.write_str("Basic"),
+            Self::Bearer { .. } => f.write_str("Bearer"),
+        }
+    }
 }
 
 impl Default for Credentials {
@@ -208,80 +218,69 @@ pub struct Client {
     endpoint: String,
 }
 
-impl Request for Client {
+impl Execute for Client {
     type Error = ClientError;
-
-    #[cfg_attr(feature = "tracing", tracing::instrument)]
-    fn request<T, U>(
-        &self,
-        method: &Method,
-        endpoint: &str,
-        payload: &T,
-    ) -> impl Future<Output = Result<U, Self::Error>>
-    where
-        T: Serialize + Debug + Send + Sync,
-        U: DeserializeOwned + Debug + Send + Sync,
-    {
-        self.inner.request(method, endpoint, payload)
-    }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
     fn execute(
         &self,
         request: reqwest::Request,
-    ) -> impl Future<Output = Result<reqwest::Response, Self::Error>> {
+    ) -> impl Future<Output = Result<reqwest::Response, Self::Error>> + Send + 'static {
         self.inner.execute(request)
     }
 }
 
-impl RestClient for Client {
-    type Error = ClientError;
+impl<X: IntoUrl + Send + fmt::Debug> RestClient<X> for Client {
+    fn request<T, U>(
+        &self,
+        method: &Method,
+        endpoint: X,
+        payload: &T,
+    ) -> impl Future<Output = Result<U, Self::Error>> + Send
+    where
+        T: ?Sized + Serialize + fmt::Debug + Send + Sync,
+        U: DeserializeOwned + fmt::Debug + Send + Sync,
+    {
+        self.inner.request(method, endpoint, payload)
+    }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    fn get<T>(&self, endpoint: &str) -> impl Future<Output = Result<T, Self::Error>>
+    fn get<T>(&self, endpoint: X) -> impl Future<Output = Result<T, Self::Error>>
     where
-        T: DeserializeOwned + Debug + Send + Sync,
+        T: DeserializeOwned + fmt::Debug + Send + Sync,
     {
         self.inner.get(endpoint)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    fn post<T, U>(
-        &self,
-        endpoint: &str,
-        payload: &T,
-    ) -> impl Future<Output = Result<U, Self::Error>>
+    fn post<T, U>(&self, endpoint: X, payload: &T) -> impl Future<Output = Result<U, Self::Error>>
     where
-        T: Serialize + Debug + Send + Sync,
-        U: DeserializeOwned + Debug + Send + Sync,
+        T: Serialize + fmt::Debug + Send + Sync + ?Sized,
+        U: DeserializeOwned + fmt::Debug + Send + Sync,
     {
         self.inner.post(endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    fn put<T, U>(&self, endpoint: &str, payload: &T) -> impl Future<Output = Result<U, Self::Error>>
+    fn put<T, U>(&self, endpoint: X, payload: &T) -> impl Future<Output = Result<U, Self::Error>>
     where
-        T: Serialize + Debug + Send + Sync,
-        U: DeserializeOwned + Debug + Send + Sync,
+        T: Serialize + fmt::Debug + Send + Sync + ?Sized,
+        U: DeserializeOwned + fmt::Debug + Send + Sync,
     {
         self.inner.put(endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    fn patch<T, U>(
-        &self,
-        endpoint: &str,
-        payload: &T,
-    ) -> impl Future<Output = Result<U, Self::Error>>
+    fn patch<T, U>(&self, endpoint: X, payload: &T) -> impl Future<Output = Result<U, Self::Error>>
     where
-        T: Serialize + Debug + Send + Sync,
-        U: DeserializeOwned + Debug + Send + Sync,
+        T: Serialize + fmt::Debug + Send + Sync + ?Sized,
+        U: DeserializeOwned + fmt::Debug + Send + Sync,
     {
         self.inner.patch(endpoint, payload)
     }
 
     #[cfg_attr(feature = "tracing", tracing::instrument)]
-    fn delete(&self, endpoint: &str) -> impl Future<Output = Result<(), Self::Error>> {
+    fn delete(&self, endpoint: X) -> impl Future<Output = Result<(), Self::Error>> {
         self.inner.delete(endpoint)
     }
 }

@@ -4,4 +4,7 @@
 
 pub mod addon_provider;
 pub mod functions;
+pub mod http_error;
+#[cfg(feature = "network-group")]
+pub mod network_group;
 pub mod products;
