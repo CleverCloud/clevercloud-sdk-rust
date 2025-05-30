@@ -6,7 +6,6 @@ use core::{fmt, str::FromStr};
 
 use chrono::{DateTime, Utc};
 use oauth10a::{
-    client::ClientError,
     execute::ExecuteRequest,
     reqwest::{
         self, Body, IntoUrl, Method,
@@ -16,7 +15,7 @@ use oauth10a::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{Client, EndpointError, RestError, v4::ErrorResponse};
+use crate::{Client, ClientError, EndpointError, RestError, v4::ErrorResponse};
 
 // -----------------------------------------------------------------------------
 // Constants

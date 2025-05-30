@@ -5,8 +5,10 @@
 mod error;
 pub use error::HttpError;
 
-pub type ErrorResponse = oauth10a::rest::ErrorResponse<HttpError>;
+pub type ErrorResponse = oauth10a::rest::ErrorResponse<Box<HttpError>>;
 
 pub mod addon_provider;
 pub mod functions;
+#[cfg(feature = "network-group")]
+pub mod network_group;
 pub mod products;

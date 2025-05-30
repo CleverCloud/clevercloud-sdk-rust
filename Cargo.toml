@@ -13,17 +13,18 @@ keywords = ["clevercloud", "sdk", "logging", "metrics", "jsonschemas"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["logging"]
+default = ["logging", "network-group"]
 jsonschemas = ["dep:schemars"]
 logging = ["dep:log", "oauth10a/logging", "tracing/log-always"]
 metrics = ["oauth10a/metrics"]
 tracing = ["oauth10a/tracing", "dep:tracing"]
-network-group = ["dep:base64", "x25519-dalek", "dep:rand_core", "dep:zeroize"]
+network-group = ["dep:base64", "x25519-dalek", "dep:rand_core", "dep:cidr"]
 
 [dependencies]
 base64 = { version = "^0.22.1", optional = true }
 chrono = { version = "^0.4.41", features = ["serde"] }
-oauth10a = { version = "^3.0.0", default-features = false, features = [
+cidr = { version = "^0.3.1", features = ["serde"], optional = true }
+oauth10a = { path = "../oauth10a-rust", default-features = false, features = [
     "client",
     "serde",
     "rest",
@@ -49,7 +50,10 @@ x25519-dalek = { version = "^2.0.1", features = [
     "zeroize",
     "static_secrets",
 ], optional = true }
-zeroize = { version = "^1.8.1", features = [
+zeroize = { version = "^1.8.1", features = ["serde", "derive"] }
+env-capture = { git = "https://gitlab.corp.clever-cloud.com/CedricLG/env-capture", features = [
     "serde",
-    "derive",
-], optional = true }
+] }
+
+[dev-dependencies]
+tracing-subscriber = { version = "^0.3.19", features = ["env-filter"] }
