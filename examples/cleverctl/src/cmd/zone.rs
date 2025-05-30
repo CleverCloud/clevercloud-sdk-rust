@@ -3,7 +3,6 @@
 //! This module provides command implementation related to the zone API
 use std::sync::Arc;
 
-use clap::Subcommand;
 use clevercloud_sdk::{Client, oauth10a::reqwest, v4::products::zones};
 
 use crate::{
@@ -14,7 +13,7 @@ use crate::{
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
@@ -28,7 +27,7 @@ pub enum Error {
 // Command enumeration
 
 /// Command enum contains all operations that could be achieved on the zone API
-#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, clap::Subcommand)]
 pub enum Command {
     #[clap(name = "list", aliases = &["l"], about = "List available zones")]
     List {
@@ -66,7 +65,7 @@ impl Executor for Command {
 // helpers
 
 pub async fn list(config: Arc<Configuration>, output: &Output) -> Result<(), Error> {
-    let client = Client::from(config.credentials.to_owned());
+    let client = Client::from(&config.credentials);
     let zones = zones::list(&client).await.map_err(Error::List)?;
 
     println!(

@@ -16,7 +16,7 @@ use crate::{
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
@@ -37,7 +37,7 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Environment enumeration
 
-#[derive(Subcommand, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 pub enum Environment {
     #[clap(name = "get", about = "Get environment variables")]
     Get {

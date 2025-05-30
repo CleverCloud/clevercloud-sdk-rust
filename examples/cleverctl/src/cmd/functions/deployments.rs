@@ -5,7 +5,6 @@
 
 use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
 
-use clap::Subcommand;
 use clevercloud_sdk::{
     Client,
     oauth10a::reqwest,
@@ -22,7 +21,7 @@ use crate::{
 // ----------------------------------------------------------------------------
 // Error
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
@@ -49,7 +48,7 @@ pub enum Error {
 // ----------------------------------------------------------------------------
 // Command
 
-#[derive(Subcommand, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, clap::Subcommand)]
 pub enum Command {
     #[clap(name = "list", aliases = &["l"], about = "List functions information of an organisation")]
     List {

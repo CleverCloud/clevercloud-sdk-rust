@@ -3,22 +3,23 @@
 //! This module provide helpers and structures to interact with the config
 //! provider addon's environment
 
-use std::{collections::HashMap, fmt::Debug};
+use std::collections::HashMap;
 
-#[cfg(feature = "logging")]
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
+use oauth10a::rest::RestClient;
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Client, v4::addon_provider::AddonProviderId};
+use crate::{
+    Client, EndpointError, RestError,
+    v4::{ErrorResponse, addon_provider::AddonProviderId},
+};
 
 // -----------------------------------------------------------------------------
 // Variable structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Variable {
     #[serde(rename = "name")]
     pub name: String,
@@ -43,12 +44,16 @@ impl Variable {
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error("failed to get variables of config-provider addon '{0}', {1}")]
-    Get(String, ClientError),
+    Get(String, RestError),
     #[error("failed to update variables of config-provider addon '{0}', {1}")]
-    Put(String, ClientError),
+    Put(String, RestError),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
 }
 
 // -----------------------------------------------------------------------------
@@ -57,25 +62,20 @@ pub enum Error {
 /// Retrieve environment variables of the config provider addon
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 pub async fn get(client: &Client, id: &str) -> Result<Vec<Variable>, Error> {
-    let path = format!(
-        "{}/v4/addon-providers/{}/addons/{}/env",
-        client.endpoint,
-        AddonProviderId::ConfigProvider,
-        id
+    let endpoint = client.endpoint(format_args!(
+        "/v4/addon-providers/{}/addons/{id}/env",
+        AddonProviderId::ConfigProvider
+    ))?;
+
+    debug!(
+        %endpoint, %id,
+        "execute a request to get information about the config-provider addon"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get information about the config-provider addon, path: '{}', id: '{}'",
-            &path, id
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::Get(id.to_string(), err))
+        .map_err(|e| Error::Get(id.to_string(), e))??)
 }
 
 /// Update environment variables of the config provider addon
@@ -85,25 +85,21 @@ pub async fn put(
     id: &str,
     variables: &Vec<Variable>,
 ) -> Result<Vec<Variable>, Error> {
-    let path = format!(
-        "{}/v4/addon-providers/{}/addons/{}/env",
-        client.endpoint,
-        AddonProviderId::ConfigProvider,
-        id
+    let endpoint = client.endpoint(format_args!(
+        "/v4/addon-providers/{}/addons/{id}/env",
+        AddonProviderId::ConfigProvider
+    ))?;
+
+    debug!(
+        %endpoint,
+        %id,
+        "execute a request to update information about the config-provider addon",
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to update information about the config-provider addon, path: '{}', id: '{}'",
-            &path, id
-        );
-    }
-
-    client
-        .put(&path, variables)
+    Ok(client
+        .put(endpoint, variables)
         .await
-        .map_err(|err| Error::Put(id.to_string(), err))
+        .map_err(|e| Error::Put(id.to_string(), e))??)
 }
 
 /// Insert a new environment variable into config provider

@@ -4,40 +4,41 @@
 //! addon provider
 #![allow(deprecated)]
 
-use std::{
-    convert::TryFrom,
-    fmt::{self, Debug, Display, Formatter},
-    str::FromStr,
-};
+use core::{fmt, str::FromStr};
 
-#[cfg(feature = "logging")]
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
+use oauth10a::rest::RestClient;
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
 
 use crate::{
-    Client,
-    v4::addon_provider::{AddonProvider, AddonProviderId},
+    Client, EndpointError, RestError,
+    v4::{
+        ErrorResponse,
+        addon_provider::{AddonProvider, AddonProviderId},
+    },
 };
 
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error("failed to parse version from '{0}', available version are 7 and 8")]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
-    Get(AddonProviderId, ClientError),
+    Get(AddonProviderId, RestError),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
 }
 
 // -----------------------------------------------------------------------------
 // Version enum
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchemaRepr))]
-#[derive(SerializeRepr, DeserializeRepr, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, SerializeRepr, DeserializeRepr)]
 #[serde(untagged)]
 #[repr(i32)]
 pub enum Version {
@@ -74,8 +75,8 @@ impl Into<String> for Version {
     }
 }
 
-impl Display for Version {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+impl fmt::Display for Version {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::V7 => write!(f, "7"),
             Self::V8 => write!(f, "8"),
@@ -89,23 +90,18 @@ impl Display for Version {
 /// returns information about the elasticsearch addon provider
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
-    let path = format!(
-        "{}/v4/addon-providers/{}",
-        client.endpoint,
-        AddonProviderId::ElasticSearch
+    const ADDON_PROVIDER_ID: AddonProviderId = AddonProviderId::ElasticSearch;
+
+    let endpoint = client.endpoint(format_args!("/v4/addon-providers/{ADDON_PROVIDER_ID}"))?;
+
+    debug!(
+        %endpoint,
+        addon_provider = %ADDON_PROVIDER_ID,
+        "execute a request to get information about the elasticsearch addon-provider"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get information about the elasticsearch addon-provider, path: '{}', name: '{}'",
-            &path,
-            AddonProviderId::ElasticSearch
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::Get(AddonProviderId::ElasticSearch, err))
+        .map_err(|e| Error::Get(ADDON_PROVIDER_ID, e))??)
 }

@@ -3,13 +3,7 @@
 //! This module provide structures and helpers to interact with clever-cloud's
 //! addon-provider
 
-use std::{
-    collections::BTreeMap,
-    convert::TryFrom,
-    fmt::{self, Debug, Display, Formatter},
-    hash::Hash,
-    str::FromStr,
-};
+use std::{collections::BTreeMap, fmt, hash::Hash, str::FromStr};
 
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
@@ -26,7 +20,7 @@ pub mod redis;
 // Feature structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Serialize, Deserialize)]
 pub struct Feature {
     #[serde(rename = "name")]
     pub name: String,
@@ -38,7 +32,7 @@ pub struct Feature {
 // Cluster structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Cluster<T> {
     #[serde(rename = "id")]
     pub id: String,
@@ -56,7 +50,7 @@ pub struct Cluster<T> {
 // AddonProvider structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AddonProvider<T>
 where
     T: Ord,
@@ -74,7 +68,7 @@ where
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(
         "failed to parse addon provider identifier '{0}', available options are \
@@ -89,7 +83,7 @@ pub enum Error {
 // AddonProviderName structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(untagged, try_from = "String", into = "String")]
 pub enum AddonProviderId {
     PostgreSql,
@@ -171,8 +165,8 @@ impl Into<String> for AddonProviderId {
     }
 }
 
-impl Display for AddonProviderId {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+impl fmt::Display for AddonProviderId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self.as_str(), f)
     }
 }

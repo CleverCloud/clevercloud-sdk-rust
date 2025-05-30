@@ -16,7 +16,7 @@ pub mod config_provider;
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
@@ -33,7 +33,7 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Addon enumeration
 
-#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 pub enum Command {
     #[clap(name = "list", about = "List addons of an organisation")]
     List {

@@ -16,7 +16,7 @@ pub mod environment;
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to execute command on config-provider environment, {0}")]
     Environment(environment::Error),
@@ -25,7 +25,7 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // ConfigProvider structure
 
-#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 pub enum ConfigProvider {
     #[clap(name = "environment", aliases = &["env"], subcommand, about = "Interact with config-provider environment")]
     Environment(Environment),

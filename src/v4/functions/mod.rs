@@ -3,53 +3,52 @@
 //! This module provides all structures and helpers to interact with functions
 //! product at Clever Cloud.
 
-use std::{collections::BTreeMap, fmt::Debug};
+use core::fmt;
+use std::collections::BTreeMap;
 
 use chrono::{DateTime, Utc};
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{
-    ClientError, RestClient,
-    bytes::Buf,
-    reqwest::{self, Method},
-    url,
+use oauth10a::{
+    reqwest::{self, IntoUrl, Method},
+    rest::RestClient,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::Client;
+use crate::{Client, EndpointError, RestError, v4::ErrorResponse};
 
 pub mod deployments;
 
 // -----------------------------------------------------------------------------
 // Error
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("failed to parse endpoint '{0}', {1}")]
-    ParseUrl(String, url::ParseError),
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error("failed to list functions for organisation '{0}', {1}")]
-    List(String, ClientError),
+    List(String, RestError),
     #[error("failed to create function on organisation '{0}', {1}")]
-    Create(String, ClientError),
+    Create(String, RestError),
     #[error("failed to get function '{0}' for organisation '{1}', {2}")]
-    Get(String, String, ClientError),
+    Get(String, String, RestError),
     #[error("failed to update function '{0}' of organisation '{1}', {2}")]
-    Update(String, String, ClientError),
+    Update(String, String, RestError),
     #[error("failed to delete function '{0}' of organisation '{1}', {2}")]
-    Delete(String, String, ClientError),
+    Delete(String, String, RestError),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
+
+    #[error("failed to execute request, {0}")]
+    Execute(reqwest::Error),
     #[error("failed to aggregate body, {0}")]
     BodyAggregation(reqwest::Error),
     #[error("failed to deserialize execute response payload, {0}")]
     Deserialize(serde_json::Error),
-    #[error("failed to execute request, {0}")]
-    Execute(reqwest::Error),
-    #[error("failed to execute request, got status code {0}")]
-    StatusCode(u16),
 }
 
 // -----------------------------------------------------------------------------
-// CreateOpts structure
+// Opts structure
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Opts {
     #[serde(rename = "name")]
     pub name: Option<String>,
@@ -65,6 +64,12 @@ pub struct Opts {
     pub max_instances: u64,
 }
 
+impl Opts {
+    pub const DEFAULT_MAX_MEMORY: u64 = 512 * 1024 * 1024;
+
+    pub const DEFAULT_MAX_INSTANCES: u64 = 1;
+}
+
 impl Default for Opts {
     fn default() -> Self {
         Self {
@@ -72,8 +77,8 @@ impl Default for Opts {
             description: None,
             tag: None,
             environment: BTreeMap::new(),
-            max_memory: 512 * 1024 * 1024,
-            max_instances: 1,
+            max_memory: Self::DEFAULT_MAX_MEMORY,
+            max_instances: Self::DEFAULT_MAX_INSTANCES,
         }
     }
 }
@@ -81,7 +86,7 @@ impl Default for Opts {
 // -----------------------------------------------------------------------------
 // Function structure
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Function {
     #[serde(rename = "id")]
     pub id: String,
@@ -108,7 +113,7 @@ pub struct Function {
 // -----------------------------------------------------------------------------
 // ExecuteResult structure
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ExecutionResult {
     Ok {
@@ -131,9 +136,9 @@ impl ExecutionResult {
     #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn ok<T, U, V>(stdout: T, stderr: U, dmesg: V, current_pages: Option<u64>) -> Self
     where
-        T: ToString,
-        U: ToString,
-        V: ToString,
+        T: fmt::Display,
+        U: fmt::Display,
+        V: fmt::Display,
     {
         Self::Ok {
             stdout: stdout.to_string(),
@@ -146,7 +151,7 @@ impl ExecutionResult {
     #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn err<T>(error: T) -> Self
     where
-        T: ToString,
+        T: fmt::Display,
     {
         Self::Err {
             error: error.to_string(),
@@ -167,140 +172,134 @@ impl ExecutionResult {
 // -----------------------------------------------------------------------------
 // Helpers
 
+/// Returns the list of function for an organisation.
 #[cfg_attr(feature = "tracing", tracing::instrument)]
-/// returns the list of function for an organisation
 pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Function>, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        "execute a request to list functions"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to list functions for organisation, path: '{path}', organisation: '{organisation_id}'"
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::List(organisation_id.to_string(), err))
+        .map_err(|e| Error::List(organisation_id.to_string(), e))??)
 }
 
+/// Creates a function on the given organisation.
 #[cfg_attr(feature = "tracing", tracing::instrument)]
-/// create a function on the given organisation
 pub async fn create(
     client: &Client,
     organisation_id: &str,
     opts: &Opts,
 ) -> Result<Function, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        "execute a request to create function"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to create function, path: '{path}', organisation: {organisation_id}"
-        );
-    }
-
-    client
-        .post(&path, opts)
+    Ok(client
+        .post(endpoint, opts)
         .await
-        .map_err(|err| Error::Create(organisation_id.to_string(), err))
+        .map_err(|e| Error::Create(organisation_id.to_string(), e))??)
 }
 
+/// Returns the function information of the organisation.
 #[cfg_attr(feature = "tracing", tracing::instrument)]
-/// returns the function information of the organisation
 pub async fn get(
     client: &Client,
     organisation_id: &str,
     function_id: &str,
 ) -> Result<Function, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}",
+    ))?;
+
+    debug!(
+        %endpoint,
+        organization = organisation_id,
+        function = function_id,
+        "execute a request to get function"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get function, path: '{path}', organisation: {organisation_id}, function: {function_id}"
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::Get(function_id.to_string(), organisation_id.to_string(), err))
+        .map_err(|e| Error::Get(function_id.to_string(), organisation_id.to_string(), e))??)
 }
 
+/// Updates the function information of the organisation.
 #[cfg_attr(feature = "tracing", tracing::instrument)]
-/// Update the function information of the organisation
 pub async fn update(
     client: &Client,
     organisation_id: &str,
     function_id: &str,
     opts: &Opts,
 ) -> Result<Function, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}",
+    ))?;
+
+    debug!(
+        %endpoint,
+        organization = organisation_id,
+        function = function_id,
+        "execute a request to update function"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to update function, path: '{path}', organisation: {organisation_id}, function: {function_id}"
-        );
-    }
-
-    client
-        .put(&path, opts)
+    Ok(client
+        .put(endpoint, opts)
         .await
-        .map_err(|err| Error::Update(function_id.to_string(), organisation_id.to_string(), err))
+        .map_err(|e| Error::Update(function_id.to_string(), organisation_id.to_string(), e))??)
 }
 
+/// Returns the function information of the organisation.
 #[cfg_attr(feature = "tracing", tracing::instrument)]
-/// returns the function information of the organisation
 pub async fn delete(
     client: &Client,
     organisation_id: &str,
     function_id: &str,
 ) -> Result<(), Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}",
+    ))?;
+
+    debug!(
+        %endpoint,
+        organization = organisation_id,
+        function = function_id,
+        "execute a request to delete function"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to delete function, path: '{path}', organisation: {organisation_id}, function: {function_id}"
-        );
-    }
-
-    client
-        .delete(&path)
+    Ok(client
+        .delete(endpoint)
         .await
-        .map_err(|err| Error::Delete(function_id.to_string(), organisation_id.to_string(), err))
+        .map_err(|e| Error::Delete(function_id.to_string(), organisation_id.to_string(), e))??)
 }
 
-#[cfg_attr(feature = "tracing", tracing::instrument)]
 /// Execute a GET HTTP request on the given endpoint
-pub async fn execute(client: &Client, endpoint: &str) -> Result<ExecutionResult, Error> {
-    let req = reqwest::Request::new(
-        Method::GET,
-        endpoint
-            .parse()
-            .map_err(|err| Error::ParseUrl(endpoint.to_string(), err))?,
-    );
+#[cfg_attr(feature = "tracing", tracing::instrument)]
+pub async fn execute<X: IntoUrl + fmt::Debug>(
+    client: &Client,
+    endpoint: X,
+) -> Result<ExecutionResult, Error> {
+    let url = endpoint.into_url().map_err(Error::Execute)?;
+
+    let req = reqwest::Request::new(Method::GET, url);
 
     let res = client.inner().execute(req).await.map_err(Error::Execute)?;
+
     let buf = res.bytes().await.map_err(Error::BodyAggregation)?;
 
-    serde_json::from_reader(buf.reader()).map_err(Error::Deserialize)
+    serde_json::from_slice(&buf).map_err(Error::Deserialize)
 }

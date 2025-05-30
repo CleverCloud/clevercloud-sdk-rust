@@ -25,7 +25,7 @@ pub mod zone;
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to parse output '{0}', available options are 'json' or 'yaml'")]
     ParseOutput(String),
@@ -46,7 +46,7 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Output enumeration
 
-#[derive(PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum Output {
     #[default]
     Json,
@@ -103,7 +103,7 @@ pub trait Executor {
 // Command enumeration
 
 /// Command enum contains all operations that the command line could handle
-#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 pub enum Command {
     #[clap(name = "self", aliases = &["sel", "se", "s"], subcommand, about = "Interact with the current user")]
     Myself(myself::Command),
@@ -133,7 +133,7 @@ impl Executor for Command {
 
 /// Args structure contains all commands and global flags that the command line
 /// supports
-#[derive(Parser, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Parser)]
 #[clap(author, version, about)]
 pub struct Args {
     /// Specify a configuration file

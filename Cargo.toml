@@ -1,6 +1,6 @@
 [package]
 name = "clevercloud-sdk"
-description = "A rust client and structures to interact with the Clever-Cloud API."
+description = "A Rust client and structures to interact with the Clever-Cloud API."
 version = "0.15.0"
 edition = "2024"
 rust-version = "1.85.0"
@@ -12,12 +12,26 @@ keywords = ["clevercloud", "sdk", "logging", "metrics", "jsonschemas"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["logging"]
+jsonschemas = ["dep:schemars"]
+logging = ["dep:log", "oauth10a/logging", "tracing/log-always"]
+metrics = ["oauth10a/metrics"]
+tracing = ["oauth10a/tracing", "dep:tracing"]
+network-group = ["dep:base64", "x25519-dalek", "dep:rand_core", "dep:zeroize"]
+
 [dependencies]
-chrono = { version = "^0.4.40", features = ["serde"] }
-oauth10a = { version = "^2.1.1", default-features = false, features = [
+base64 = { version = "^0.22.1", optional = true }
+chrono = { version = "^0.4.41", features = ["serde"] }
+oauth10a = { version = "^3.0.0", default-features = false, features = [
     "client",
+    "serde",
+    "rest",
+    "sse",
+    "zeroize",
 ] }
-log = { version = "^0.4.26", optional = true }
+log = { version = "^0.4.27", optional = true }
+rand_core = { version = "^0.9.3", features = ["os_rng"], optional = true }
 schemars = { version = "^0.8.22", features = [
     "chrono",
     "indexmap1",
@@ -30,11 +44,12 @@ serde_repr = "^0.1.20"
 serde_json = "^1.0.140"
 thiserror = "^2.0.12"
 tracing = { version = "^0.1.41", optional = true }
-uuid = { version = "^1.16.0", features = ["serde", "v4"] }
-
-[features]
-default = ["logging"]
-jsonschemas = ["schemars"]
-logging = ["oauth10a/logging", "tracing/log-always", "log"]
-metrics = ["oauth10a/metrics"]
-tracing = ["oauth10a/tracing", "dep:tracing"]
+uuid = { version = "^1.17.0", features = ["serde", "v4"] }
+x25519-dalek = { version = "^2.0.1", features = [
+    "zeroize",
+    "static_secrets",
+], optional = true }
+zeroize = { version = "^1.8.1", features = [
+    "serde",
+    "derive",
+], optional = true }
