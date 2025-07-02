@@ -19,7 +19,7 @@ pub mod logging;
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to load configuration, {0}")]
     Configuration(cfg::Error),

@@ -3,22 +3,23 @@
 //! This module expose structures and helpers to interact with the addon api
 //! version 2
 
-use std::{collections::BTreeMap, fmt::Debug};
+use std::collections::BTreeMap;
 
-#[cfg(feature = "logging")]
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
+use oauth10a::rest::RestClient;
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Client, v4::addon_provider::config_provider::addon::environment::Variable};
+use crate::{
+    Client, EndpointError, RestError, v2::ErrorResponse,
+    v4::addon_provider::config_provider::addon::environment::Variable,
+};
 
 // -----------------------------------------------------------------------------
 // Provider structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct Provider {
     #[serde(rename = "id")]
     pub id: String,
@@ -56,7 +57,7 @@ pub struct Provider {
 // Feature structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Serialize, Deserialize)]
 pub struct Feature {
     #[serde(rename = "name")]
     pub name: String,
@@ -74,7 +75,7 @@ pub struct Feature {
 // Plan structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct Plan {
     #[serde(rename = "id")]
     pub id: String,
@@ -96,7 +97,7 @@ pub struct Plan {
 // Addon structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, PartialOrd, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub struct Addon {
     #[serde(rename = "id")]
     pub id: String,
@@ -120,7 +121,7 @@ pub struct Addon {
 // Opts enum
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, Eq, PartialEq, PartialOrd, Ord, Clone, Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Opts {
     #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
@@ -134,7 +135,7 @@ pub struct Opts {
 // CreateOpts structure
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Serialize, Deserialize)]
 pub struct CreateOpts {
     #[serde(rename = "name")]
     pub name: String,
@@ -151,18 +152,22 @@ pub struct CreateOpts {
 // -----------------------------------------------------------------------------
 // Error enumerations
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error("failed to list addons of organisation '{0}', {1}")]
-    List(String, ClientError),
+    List(String, RestError),
     #[error("failed to get addon '{0}' of organisation '{1}', {2}")]
-    Get(String, String, ClientError),
+    Get(String, String, RestError),
     #[error("failed to get addon '{0}' environment of organisation '{1}', {2}")]
-    Environment(String, String, ClientError),
+    Environment(String, String, RestError),
     #[error("failed to create addon for organisation '{0}', {1}")]
-    Create(String, ClientError),
+    Create(String, RestError),
     #[error("failed to delete addon '{0}' for organisation '{1}', {2}")]
-    Delete(String, String, ClientError),
+    Delete(String, String, RestError),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
 }
 
 // -----------------------------------------------------------------------------
@@ -171,45 +176,38 @@ pub enum Error {
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the list of addons for the given organisation
 pub async fn list(client: &Client, organisation_id: &str) -> Result<Vec<Addon>, Error> {
-    let path = format!(
-        "{}/v2/organisations/{}/addons",
-        client.endpoint, organisation_id,
+    let endpoint = client.endpoint(format_args!("/v2/organisations/{organisation_id}/addons"))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        "execute a request to get the list of addons"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get the list of addons, path: '{}', organisation: '{}'",
-            &path, organisation_id
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::List(organisation_id.to_owned(), err))
+        .map_err(|e| Error::List(organisation_id.to_owned(), e))??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns the addon for the given the organisation and identifier
-pub async fn get(client: &Client, organisation_id: &str, id: &str) -> Result<Addon, Error> {
-    let path = format!(
-        "{}/v2/organisations/{}/addons/{}",
-        client.endpoint, organisation_id, id
+pub async fn get(client: &Client, organisation_id: &str, addon_id: &str) -> Result<Addon, Error> {
+    let endpoint = client.endpoint(format_args!(
+        "/v2/organisations/{organisation_id}/addons/{addon_id}"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        addon = addon_id,
+        "execute a request to get information about an addon",
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get information about an addon, path: '{}', organisation: '{}', id: '{}'",
-            &path, organisation_id, id
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::Get(id.to_owned(), organisation_id.to_owned(), err))
+        .map_err(|e| Error::Get(addon_id.to_owned(), organisation_id.to_owned(), e))??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
@@ -219,50 +217,43 @@ pub async fn create(
     organisation_id: &str,
     opts: &CreateOpts,
 ) -> Result<Addon, Error> {
-    let path = format!(
-        "{}/v2/organisations/{}/addons",
-        client.endpoint, organisation_id
+    let endpoint = client.endpoint(format_args!("/v2/organisations/{organisation_id}/addons"))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        name = opts.name,
+        region = opts.region,
+        plan = opts.plan,
+        provider_id = opts.provider_id,
+        "execute a request to create an addon",
+
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to create an addon, path: '{}', organisation: '{}', name: '{}', region: '{}', plan: '{}', provider-id: '{}'",
-            &path,
-            organisation_id,
-            &opts.name,
-            &opts.region,
-            &opts.plan,
-            &opts.provider_id.to_string()
-        );
-    }
-
-    client
-        .post(&path, opts)
+    Ok(client
+        .post(endpoint, opts)
         .await
-        .map_err(|err| Error::Create(organisation_id.to_owned(), err))
+        .map_err(|e| Error::Create(organisation_id.to_owned(), e))??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 /// delete the given addon
-pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<(), Error> {
-    let path = format!(
-        "{}/v2/organisations/{}/addons/{}",
-        client.endpoint, organisation_id, id
+pub async fn delete(client: &Client, organisation_id: &str, addon_id: &str) -> Result<(), Error> {
+    let endpoint = client.endpoint(format_args!(
+        "/v2/organisations/{organisation_id}/addons/{addon_id}"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        addon = addon_id,
+        "execute a request to delete an addon",
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to delete an addon, path: '{}', organisation: '{}', id: '{}'",
-            &path, organisation_id, id
-        );
-    }
-
-    client
-        .delete(&path)
+    Ok(client
+        .delete(endpoint)
         .await
-        .map_err(|err| Error::Delete(id.to_owned(), organisation_id.to_owned(), err))
+        .map_err(|e| Error::Delete(addon_id.to_owned(), organisation_id.to_owned(), e))??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
@@ -270,28 +261,23 @@ pub async fn delete(client: &Client, organisation_id: &str, id: &str) -> Result<
 pub async fn environment(
     client: &Client,
     organisation_id: &str,
-    id: &str,
+    addon_id: &str,
 ) -> Result<BTreeMap<String, String>, Error> {
-    let path = format!(
-        "{}/v2/organisations/{}/addons/{}/env",
-        client.endpoint, organisation_id, id
+    let endpoint = client.endpoint(format_args!(
+        "/v2/organisations/{organisation_id}/addons/{addon_id}/env"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        addon = addon_id,
+        "execute a request to get secret of a addon"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get secret of a addon, path: '{}', organisation: '{}', id: '{}'",
-            &path, organisation_id, id
-        );
-    }
-
     let env: Vec<Variable> = client
-        .get(&path)
+        .get(endpoint)
         .await
-        .map_err(|err| Error::Environment(id.to_owned(), organisation_id.to_owned(), err))?;
+        .map_err(|e| Error::Environment(addon_id.to_owned(), organisation_id.to_owned(), e))??;
 
-    Ok(env.iter().fold(BTreeMap::new(), |mut acc, var| {
-        acc.insert(var.name.to_owned(), var.value.to_owned());
-        acc
-    }))
+    Ok(env.into_iter().map(|var| (var.name, var.value)).collect())
 }

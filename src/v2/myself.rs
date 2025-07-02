@@ -3,22 +3,18 @@
 //! This module provides structures and helpers to interact with the user api
 //! version 2
 
-use std::fmt::Debug;
-
-#[cfg(feature = "logging")]
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
+use oauth10a::rest::RestClient;
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Client;
+use crate::{Client, EndpointError, RestError, v2::ErrorResponse};
 
 // -----------------------------------------------------------------------------
 // Myself structure and helpers
 
 #[cfg_attr(feature = "jsonschemas", derive(JsonSchema))]
-#[derive(Serialize, PartialEq, Eq, Deserialize, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Myself {
     #[serde(rename = "id")]
     pub id: String,
@@ -59,10 +55,14 @@ pub struct Myself {
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error("failed to get information about the current user, {0}")]
-    Get(ClientError),
+    Get(RestError),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
 }
 
 // -----------------------------------------------------------------------------
@@ -71,15 +71,12 @@ pub enum Error {
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 /// returns information about the person logged in
 pub async fn get(client: &Client) -> Result<Myself, Error> {
-    let path = format!("{}/v2/self", client.endpoint);
+    let endpoint = client.endpoint("/v2/self")?;
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get information about the logged in user, path: '{}'",
-            &path
-        );
-    }
+    debug!(
+        %endpoint,
+        "execute a request to get information about the logged in user"
+    );
 
-    client.get(&path).await.map_err(Error::Get)
+    Ok(client.get(endpoint).await.map_err(Error::Get)??)
 }

@@ -3,13 +3,14 @@
 //! This module provides helpers and structures to interact with the plan api of
 //! the addon providers
 
-#[cfg(feature = "logging")]
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
+use oauth10a::rest::RestClient;
 
 use crate::{
-    Client,
-    v2::addon::{Plan, Provider},
+    Client, EndpointError, RestError,
+    v2::{
+        ErrorResponse,
+        addon::{Plan, Provider},
+    },
     v4::addon_provider::AddonProviderId,
 };
 
@@ -22,14 +23,18 @@ pub const CONFIG_PROVIDER: &str = "plan_5d8e9596-dd73-4b73-84d9-e165372c5324";
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error("failed to fetch list of addon providers, {0}")]
-    List(ClientError),
+    List(RestError),
     #[error("failed to fetch details of addon provider '{0}'")]
     Get(AddonProviderId),
     #[error("failed to find plan '{0}' for addon provider '{1}' amongst available options: {2}")]
     Plan(String, AddonProviderId, String),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
 }
 
 // -----------------------------------------------------------------------------
@@ -38,14 +43,11 @@ pub enum Error {
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 /// Returns the list of details relative to the addon providers.
 pub async fn list(client: &Client) -> Result<Vec<Provider>, Error> {
-    let path = format!("{}/v2/products/addonproviders", client.endpoint);
+    let endpoint = client.endpoint("/v2/products/addonproviders")?;
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!("execute a request to list plans of the addon-provider, path: '{path}'");
-    }
+    debug!(%endpoint, "execute a request to list plans of the addon-provider");
 
-    client.get(&path).await.map_err(Error::List)
+    Ok(client.get(endpoint).await.map_err(Error::List)??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]

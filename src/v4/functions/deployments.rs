@@ -2,35 +2,33 @@
 //!
 //! This module provides structures to interact with functions' deployments.
 
-use std::{
-    fmt::{self, Debug, Display, Formatter},
-    str::FromStr,
-};
+use core::{fmt, str::FromStr};
 
 use chrono::{DateTime, Utc};
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{
-    ClientError, Request, RestClient,
+use oauth10a::{
+    execute::ExecuteRequest,
     reqwest::{
-        self, Body, Method,
-        header::{CONTENT_LENGTH, CONTENT_TYPE, HeaderValue},
+        self, Body, IntoUrl, Method,
+        header::{self, HeaderValue},
     },
-    url,
+    rest::RestClient,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::Client;
+use crate::{Client, ClientError, EndpointError, RestError, v4::ErrorResponse};
 
 // -----------------------------------------------------------------------------
 // Constants
 
-pub const MIME_APPLICATION_WASM: &str = "application/wasm";
+pub const MIME_APPLICATION_WASM: HeaderValue = HeaderValue::from_static("application/wasm");
 
 // ----------------------------------------------------------------------------
 // Error
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error(transparent)]
+    Endpoint(#[from] EndpointError),
     #[error(
         "failed to parse the webassembly platform '{0}', available values are 'rust', 'javascript' ('js'), 'tiny_go' ('go') and 'assemblyscript'"
     )]
@@ -39,30 +37,28 @@ pub enum Error {
         "failed to parse the status '{0}', available values are 'waiting_for_upload', 'deploying', 'packaging', 'ready' and 'error'"
     )]
     ParseStatus(String),
-    #[error("failed to parse endpoint '{0}', {1}")]
-    ParseUrl(String, url::ParseError),
     #[error("failed to list deployments for function '{0}' of organisation '{1}', {2}")]
-    List(String, String, ClientError),
+    List(String, String, RestError),
     #[error("failed to create deployment for function '{0}' on organisation '{1}', {2}")]
-    Create(String, String, ClientError),
+    Create(String, String, RestError),
     #[error("failed to get deployment '{0}' of function '{1}' on organisation '{2}', {3}")]
-    Get(String, String, String, ClientError),
+    Get(String, String, String, RestError),
     #[error("failed to trigger deployment '{0}' of function '{1}' on organisation '{2}', {3}")]
-    Trigger(String, String, String, ClientError),
+    Trigger(String, String, String, RestError),
     #[error("failed to delete deployment '{0}' of function '{1}' on organisation '{2}', {3}")]
-    Delete(String, String, String, ClientError),
+    Delete(String, String, String, RestError),
     #[error("failed to create request, {0}")]
-    Request(reqwest::Error),
+    Request(#[from] RestError),
     #[error("failed to execute request, {0}")]
-    Execute(ClientError),
-    #[error("failed to execute request, got status code {0}")]
-    StatusCode(u16),
+    Execute(#[from] ClientError),
+    #[error(transparent)]
+    StatusCode(#[from] ErrorResponse),
 }
 
 // ----------------------------------------------------------------------------
 // Platform
 
-#[derive(Serialize, Deserialize, Hash, Ord, PartialOrd, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Platform {
     #[serde(rename = "RUST")]
     Rust,
@@ -74,8 +70,8 @@ pub enum Platform {
     JavaScript,
 }
 
-impl Display for Platform {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+impl fmt::Display for Platform {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::Rust => write!(f, "RUST"),
             Self::AssemblyScript => write!(f, "ASSEMBLY_SCRIPT"),
@@ -102,7 +98,7 @@ impl FromStr for Platform {
 // ----------------------------------------------------------------------------
 // Status
 
-#[derive(Serialize, Deserialize, Hash, Ord, PartialOrd, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Status {
     #[serde(rename = "WAITING_FOR_UPLOAD")]
     WaitingForUpload,
@@ -116,8 +112,8 @@ pub enum Status {
     Error,
 }
 
-impl Display for Status {
-    fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match self {
             Self::WaitingForUpload => write!(f, "WAITING_FOR_UPLOAD"),
             Self::Packaging => write!(f, "PACKAGING"),
@@ -146,7 +142,7 @@ impl FromStr for Status {
 // ----------------------------------------------------------------------------
 // Opts
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Opts {
     #[serde(rename = "name")]
     pub name: Option<String>,
@@ -161,7 +157,7 @@ pub struct Opts {
 // ----------------------------------------------------------------------------
 // DeploymentCreation
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DeploymentCreation {
     #[serde(rename = "id")]
     pub id: String,
@@ -190,7 +186,7 @@ pub struct DeploymentCreation {
 // ----------------------------------------------------------------------------
 // Deployment
 
-#[derive(Serialize, Deserialize, PartialEq, Eq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Deployment {
     #[serde(rename = "id")]
     pub id: String,
@@ -226,22 +222,21 @@ pub async fn list(
     organisation_id: &str,
     function_id: &str,
 ) -> Result<Vec<Deployment>, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        function = function_id,
+        "execute a request to list deployments for functions"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to list deployments for functions, path: '{path}', organisation: '{organisation_id}', function_id: '{function_id}'"
-        );
-    }
-
-    client
-        .get(&path)
+    Ok(client
+        .get(endpoint)
         .await
-        .map_err(|err| Error::List(function_id.to_string(), organisation_id.to_string(), err))
+        .map_err(|e| Error::List(function_id.to_string(), organisation_id.to_string(), e))??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
@@ -252,22 +247,21 @@ pub async fn create(
     function_id: &str,
     opts: &Opts,
 ) -> Result<DeploymentCreation, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        function = function_id,
+        "execute a request to create deployment"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to create deployment, path: '{path}', organisation: {organisation_id}, function_id: '{function_id}'"
-        );
-    }
-
-    client
-        .post(&path, opts)
+    Ok(client
+        .post(endpoint, opts)
         .await
-        .map_err(|err| Error::Create(function_id.to_string(), organisation_id.to_string(), err))
+        .map_err(|e| Error::Create(function_id.to_string(), organisation_id.to_string(), e))??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
@@ -278,26 +272,26 @@ pub async fn get(
     function_id: &str,
     deployment_id: &str,
 ) -> Result<Deployment, Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        function = function_id,
+        deployment = deployment_id,
+        "execute a request to get deployment"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get deployment, path: '{path}', organisation: {organisation_id}, function: {function_id}, deployment: {deployment_id}"
-        );
-    }
-
-    client.get(&path).await.map_err(|err| {
+    Ok(client.get(endpoint).await.map_err(|e| {
         Error::Get(
             deployment_id.to_string(),
             function_id.to_string(),
             organisation_id.to_string(),
-            err,
+            e,
         )
-    })
+    })??)
 }
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
@@ -308,27 +302,31 @@ pub async fn trigger(
     function_id: &str,
     deployment_id: &str,
 ) -> Result<(), Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}/trigger",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!(
+        "/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}/trigger"
+    ))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        function = function_id,
+        deployment = deployment_id,
+        "execute a request to get deployment"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to get deployment, path: '{path}', organisation: {organisation_id}, function: {function_id}, deployment: {deployment_id}"
-        );
-    }
+    let request = reqwest::Request::new(Method::POST, endpoint);
 
-    let req = reqwest::Request::new(
-        Method::POST,
-        path.parse().map_err(|err| Error::ParseUrl(path, err))?,
-    );
+    let response = client
+        .execute_request(request)
+        .await
+        .map_err(RestError::Execute)?;
 
-    let res = client.execute(req).await.map_err(Error::Execute)?;
-    let status = res.status();
-    if !status.is_success() {
-        return Err(Error::StatusCode(status.as_u16()));
+    let status_code = response.status();
+
+    if !status_code.is_success() {
+        let full = response.bytes().await.map_err(RestError::BodyAggregation)?;
+        let value = serde_json::from_slice(&full).map_err(RestError::Deserialize)?;
+        return Err(Error::StatusCode(ErrorResponse { status_code, value }));
     }
 
     Ok(())
@@ -336,36 +334,37 @@ pub async fn trigger(
 
 #[cfg_attr(feature = "tracing", tracing::instrument)]
 /// Upload the WebAssembly on the endpoint
-pub async fn upload(client: &Client, endpoint: &str, buf: Vec<u8>) -> Result<(), Error> {
-    let mut req = reqwest::Request::new(
-        Method::PUT,
-        endpoint
-            .parse()
-            .map_err(|err| Error::ParseUrl(endpoint.to_string(), err))?,
+pub async fn upload<X: IntoUrl + fmt::Debug>(
+    client: &Client,
+    endpoint: X,
+    buf: Vec<u8>,
+) -> Result<(), Error> {
+    let url = endpoint.into_url().map_err(RestError::Url)?;
+
+    let mut request = reqwest::Request::new(Method::PUT, url);
+
+    let headers = request.headers_mut();
+    let _ = headers.insert(header::CONTENT_TYPE, MIME_APPLICATION_WASM);
+    let _ = headers.insert(header::CONTENT_LENGTH, HeaderValue::from(buf.len()));
+
+    *request.body_mut() = Some(Body::from(buf));
+
+    debug!(
+        endpoint = %request.url(),
+        "execute a request to upload webassembly"
     );
 
-    req.headers_mut().insert(
-        CONTENT_TYPE,
-        HeaderValue::from_static(MIME_APPLICATION_WASM),
-    );
-    req.headers_mut()
-        .insert(CONTENT_LENGTH, HeaderValue::from(buf.len()));
-    *req.body_mut() = Some(Body::from(buf));
-
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!("execute a request to upload webassembly, endpoint: '{endpoint}'");
-    }
-
-    let res = client
+    let response = client
         .inner()
-        .execute(req)
+        .execute(request)
         .await
-        .map_err(|err| Error::Execute(ClientError::Request(err)))?;
+        .map_err(ClientError::Execute)?;
 
-    let status = res.status();
-    if !status.is_success() {
-        return Err(Error::StatusCode(status.as_u16()));
+    let status_code = response.status();
+    if !status_code.is_success() {
+        let full = response.bytes().await.map_err(RestError::BodyAggregation)?;
+        let value = serde_json::from_slice(&full).map_err(RestError::Deserialize)?;
+        return Err(Error::StatusCode(ErrorResponse { status_code, value }));
     }
 
     Ok(())
@@ -379,24 +378,22 @@ pub async fn delete(
     function_id: &str,
     deployment_id: &str,
 ) -> Result<(), Error> {
-    let path = format!(
-        "{}/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}",
-        client.endpoint
+    let endpoint = client.endpoint(format_args!("/v4/functions/organisations/{organisation_id}/functions/{function_id}/deployments/{deployment_id}"))?;
+
+    debug!(
+        %endpoint,
+        organisation = organisation_id,
+        function = function_id,
+        deployment = deployment_id,
+        "execute a request to delete deployment"
     );
 
-    #[cfg(feature = "logging")]
-    if log_enabled!(Level::Debug) {
-        debug!(
-            "execute a request to delete deployment, path: '{path}', organisation: {organisation_id}, function: {function_id}, deployment: {deployment_id}"
-        );
-    }
-
-    client.delete(&path).await.map_err(|err| {
+    Ok(client.delete(endpoint).await.map_err(|e| {
         Error::Delete(
             deployment_id.to_string(),
             function_id.to_string(),
             organisation_id.to_string(),
-            err,
+            e,
         )
-    })
+    })??)
 }

@@ -4,14 +4,14 @@
 
 use std::path::PathBuf;
 
-use clevercloud_sdk::Credentials;
+use clevercloud_sdk::oauth10a::credentials::Credentials;
 use config::{Config, ConfigError, File};
 use serde::{Deserialize, Serialize};
 
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to load configuration from file '{0}', {1}")]
     LoadConfiguration(String, ConfigError),
@@ -24,7 +24,7 @@ pub enum Error {
 // -----------------------------------------------------------------------------
 // Configuration structure
 
-#[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Configuration {
     #[serde(rename = "credentials", flatten)]
     pub credentials: Credentials,

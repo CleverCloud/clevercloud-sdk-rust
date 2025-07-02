@@ -3,7 +3,6 @@
 //! This module provides command implementation related to functions product
 use std::{collections::BTreeMap, sync::Arc};
 
-use clap::Subcommand;
 use clevercloud_sdk::{Client, oauth10a::reqwest, v4::functions};
 use tracing::info;
 
@@ -23,7 +22,7 @@ pub const DEFAULT_MAX_MEMORY: u64 = 64 * 1024 * 1024;
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
@@ -57,7 +56,7 @@ pub enum Error {
 // Command
 
 /// Command enum contains all operations that could be achieved on the user
-#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, clap::Subcommand)]
 pub enum Command {
     #[clap(name = "list", aliases = &["l"], about = "List functions information of an organisation")]
     List {

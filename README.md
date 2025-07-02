@@ -4,8 +4,7 @@
 [![Released API docs](https://docs.rs/clevercloud-sdk/badge.svg)](https://docs.rs/clevercloud-sdk)
 [![Continuous integration](https://github.com/CleverCloud/clevercloud-sdk-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CleverCloud/clevercloud-sdk-rust/actions/workflows/ci.yml)
 
-> This crate provides structures and a client to interact with the Clever-Cloud
-> API.
+> This crate provides structures and a client to interact with the Clever-Cloud API.
 
 ## Status
 
@@ -25,17 +24,19 @@ Below, you will find an example of executing a request to get information about
 myself.
 
 ```rust
-use std::error::Error;
-
-use clevercloud_sdk::{Client, v2::myself::{self, Myself}};
+use clevercloud_sdk::{
+    Client,
+    oauth10a::credentials::Credentials,
+    v2::myself::{self, Myself},
+};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
-    let client = Client::from(Credentials {
-        token: "".to_string(),
-        secret: "".to_string(),
-        consumer_key: "".to_string(),
-        consumer_secret: "".to_string(),
+async fn main() -> Result<(), Box<dyn core::error::Error + Send + Sync>> {
+    let client = Client::from(Credentials::OAuth1 {
+        token: "",
+        secret: "",
+        consumer_key: "",
+        consumer_secret: "",
     });
 
     let _myself: Myself = myself::get(&client).await?;
@@ -48,21 +49,23 @@ You could found more examples of how you could use the clevercloud-sdk by lookin
 
 ## Features
 
-| name        | description                                                                                      |
-| ----------- |--------------------------------------------------------------------------------------------------|
-| trace       | Use `tracing` crate to expose traces                                                             |
-| jsonschemas | Use `schemars` to add a derive instruction to generate json schemas representation of structures |
-| logging     | Use the `log` facility crate to print logs. Implies `oauth10a/logging` feature                   |
-| metrics     | Expose HTTP metrics through `oauth10a` crate feature.                                            |
+| name          | description                                                                                      |
+| ------------- |--------------------------------------------------------------------------------------------------|
+| trace         | Use `tracing` crate to expose traces                                                             |
+| jsonschemas   | Use `schemars` to add a derive instruction to generate json schemas representation of structures |
+| logging       | Use the `log` facility crate to print logs. Implies `oauth10a/logging` feature                   |
+| metrics       | Expose HTTP metrics through `oauth10a` crate feature.                                            |
+| network-group | Enables Clever-Cloud Network Group API.                                                          |
 
 ### Metrics
 
 Below, the exposed metrics gathered by prometheus:
 
-| name                             | labels                                                          | kind    | description                |
-| -------------------------------- | --------------------------------------------------------------- | ------- | -------------------------- |
-| oauth10a_client_request          | endpoint: String, method: String, status: Integer               | Counter | number of request on api   |
-| oauth10a_client_request_duration | endpoint: String, method: String, status: Integer, unit: String | Counter | duration of request on api |
+| name                             | labels                                                          | kind    | description                        |
+| -------------------------------- | --------------------------------------------------------------- | ------- | ---------------------------------- |
+| oauth10a_client_request          | endpoint: String, method: String, status: Integer               | Counter | number of request on API           |
+| oauth10a_client_request_duration | endpoint: String, method: String, status: Integer, unit: String | Counter | duration of request on API         |
+| oauth10a_client_sse              | endpoint: String                                                | Counter | number of events received from API |
 
 ## License
 

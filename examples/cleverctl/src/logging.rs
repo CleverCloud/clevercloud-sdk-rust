@@ -7,7 +7,7 @@ use tracing::Level;
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to set global default subscriber, {0}")]
     GlobalDefaultSubscriber(tracing::subscriber::SetGlobalDefaultError),

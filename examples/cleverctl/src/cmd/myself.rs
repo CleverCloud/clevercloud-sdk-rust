@@ -14,7 +14,7 @@ use crate::{
 // -----------------------------------------------------------------------------
 // Error enumeration
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("failed to format output, {0}")]
     FormatOutput(Box<cmd::Error>),
@@ -28,7 +28,7 @@ pub enum Error {
 // Command enumeration
 
 /// Command enum contains all operations that could be achieved on the user
-#[derive(Subcommand, Eq, PartialEq, Clone, Debug)]
+#[derive(Debug, Clone, PartialEq, Eq, Subcommand)]
 pub enum Command {
     #[clap(name = "get", aliases = &["ge", "g"], about = "Get information about the current user")]
     Get {
