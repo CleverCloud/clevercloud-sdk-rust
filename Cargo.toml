@@ -51,7 +51,7 @@ x25519-dalek = { version = "^2.0.1", features = [
     "static_secrets",
 ], optional = true }
 zeroize = { version = "^1.8.1", features = ["serde", "derive"] }
-env-capture = { git = "https://gitlab.corp.clever-cloud.com/CedricLG/env-capture", features = [
+env-capture = { path = "../env-capture", features = [
     "serde",
 ] }
 

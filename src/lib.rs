@@ -12,15 +12,11 @@ use oauth10a::{
     reqwest::{self, Request, Response, Url},
 };
 
+use crate::clever_tools::CleverTools;
+
 #[macro_use]
-mod logging;
-
-pub mod clever_env;
-use self::clever_env::{CleverEnv, CleverEnvError};
-
+pub mod logging;
 pub mod clever_tools;
-use self::clever_tools::CleverTools;
-
 pub mod v2;
 pub mod v4;
 
@@ -265,19 +261,6 @@ impl Client {
             auth_bridge_host,
             client: OAuthClient::new(client, Authorizer::new(credentials)),
         }
-    }
-
-    pub fn from_env_snapshot(env: &CleverEnv) -> Self {
-        Self::new(
-            reqwest::Client::new(),
-            env.credentials.clone(),
-            env.env_api_host().cloned(),
-            env.env_auth_bridge_host().cloned(),
-        )
-    }
-
-    pub fn from_env() -> Result<Self, CleverEnvError> {
-        Ok(Self::from_env_snapshot(&CleverEnv::from_env()?))
     }
 
     /// Sets the credentials that will be used by this client to authorize subsequent HTTP requests.

@@ -6,6 +6,49 @@ use std::{
     path::{Path, PathBuf},
 };
 
+// CLEVER TOOLS CONFIG ERROR ///////////////////////////////////////////////////
+
+#[derive(Debug, thiserror::Error)]
+pub enum CleverToolsConfigError {
+    #[error("failed to resolve home directory")]
+    HomeDir,
+    #[error("failed to open clever-tools configuration file")]
+    Open(io::Error),
+    #[error("failed to read clever-tools configuration file's contents")]
+    Read(io::Error),
+    #[error("failed to parse clever-tools configuration file's contents")]
+    Json(serde_json::Error),
+    #[error("failed to resolve environment variable {0}")]
+    EnvironmentVariable(&'static str, env::VarError),
+}
+
+// HELPERS /////////////////////////////////////////////////////////////////////
+
+pub fn xdg_home_dir() -> Result<PathBuf, CleverToolsConfigError> {
+    env::var("XDG_DATA_HOME")
+        .map(PathBuf::from)
+        .map_err(|err| CleverToolsConfigError::EnvironmentVariable("XDG_DATA_HOME", err))
+}
+
+pub fn xdg_config_dir() -> Result<PathBuf, CleverToolsConfigError> {
+    env::var("XDG_CONFIG_HOME")
+        .map(PathBuf::from)
+        .map_err(|err| CleverToolsConfigError::EnvironmentVariable("XDG_CONFIG_HOME", err))
+}
+
+pub fn home_dir() -> Result<PathBuf, CleverToolsConfigError> {
+    env::home_dir()
+        .map(Ok)
+        .unwrap_or_else(xdg_home_dir)
+}
+
+pub fn config_dir() -> Result<PathBuf, CleverToolsConfigError> {
+    Ok(match xdg_config_dir() {
+        Ok(config_dir) => PathBuf::from(config_dir),
+        Err(_) => home_dir()?.join(".config"),
+    })
+}
+
 // CLEVER TOOLS ////////////////////////////////////////////////////////////////
 
 /// Default OAuth1 consumer.
@@ -24,19 +67,6 @@ impl CleverTools {
     pub const CONSUMER_SECRET: &'static str = "MgVMqTr6fWlf2M0tkC2MXOnhfqBWDT";
 }
 
-// CLEVER TOOLS CONFIG ERROR ///////////////////////////////////////////////////
-
-#[derive(Debug, thiserror::Error)]
-pub enum CleverToolsConfigError {
-    #[error("failed to resolve home directory")]
-    HomeDir,
-    #[error("failed to open clever-tools configuration file")]
-    Open(io::Error),
-    #[error("failed to read clever-tools configuration file's contents")]
-    Read(io::Error),
-    #[error("failed to parse clever-tools configuration file's contents")]
-    Json(serde_json::Error),
-}
 
 // CLEVER TOOLS CONFIG /////////////////////////////////////////////////////////
 
@@ -48,14 +78,7 @@ pub struct CleverToolsConfig {
     pub oauth_secret: Box<str>,
 }
 
-fn config_dir() -> Result<PathBuf, CleverToolsConfigError> {
-    Ok(match env::var_os("XDG_CONFIG_HOME") {
-        Some(config_dir) => PathBuf::from(config_dir),
-        None => env::home_dir()
-            .ok_or(CleverToolsConfigError::HomeDir)?
-            .join(".config"),
-    })
-}
+
 
 impl CleverToolsConfig {
     pub fn default_config_dir() -> Result<PathBuf, CleverToolsConfigError> {
