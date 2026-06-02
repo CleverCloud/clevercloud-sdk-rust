@@ -5,14 +5,13 @@
 
 use std::{collections::BTreeMap, fmt::Debug};
 
-use chrono::{DateTime, Utc};
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{
+use crate::oauth10a::{
     ClientError, RestClient,
-    bytes::Buf,
     reqwest::{self, Method},
     url,
 };
+use chrono::{DateTime, Utc};
+use log::{Level, debug, log_enabled};
 use serde::{Deserialize, Serialize};
 
 use crate::Client;
@@ -302,5 +301,5 @@ pub async fn execute(client: &Client, endpoint: &str) -> Result<ExecutionResult,
     let res = client.inner().execute(req).await.map_err(Error::Execute)?;
     let buf = res.bytes().await.map_err(Error::BodyAggregation)?;
 
-    serde_json::from_reader(buf.reader()).map_err(Error::Deserialize)
+    serde_json::from_slice(&buf).map_err(Error::Deserialize)
 }

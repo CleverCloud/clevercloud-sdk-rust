@@ -3,9 +3,9 @@
 //! This module provides helpers and structures to interact with the plan api of
 //! the addon providers
 
+use crate::oauth10a::{ClientError, RestClient};
 #[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
 
 use crate::{
     Client,

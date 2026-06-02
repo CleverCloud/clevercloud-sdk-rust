@@ -9,9 +9,9 @@ use std::{
     str::FromStr,
 };
 
+use crate::oauth10a::{ClientError, RestClient};
 #[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
