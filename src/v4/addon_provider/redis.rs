@@ -27,7 +27,7 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse version from {0}, available version is 7.2.4")]
+    #[error("failed to parse version from {0}, available versions are 8.6.1 and 7.2.4")]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
     Get(AddonProviderId, ClientError),
@@ -42,6 +42,7 @@ pub enum Error {
 #[repr(i32)]
 pub enum Version {
     V7dot2dot4 = 724,
+    V8dot6dot1 = 861,
 }
 
 impl FromStr for Version {
@@ -49,6 +50,7 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
+            "8.6.1" => Self::V8dot6dot1,
             "7.2.4" => Self::V7dot2dot4,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
@@ -76,6 +78,7 @@ impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::V7dot2dot4 => write!(f, "7.2.4"),
+            Self::V8dot6dot1 => write!(f, "8.6.1"),
         }
     }
 }

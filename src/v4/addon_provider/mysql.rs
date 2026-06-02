@@ -26,7 +26,7 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse version from '{0}', available versions are 5.7 and 8.0")]
+    #[error("failed to parse version from '{0}', available versions are 5.7, 8.0 and 8.4")]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
     Get(AddonProviderId, ClientError),
