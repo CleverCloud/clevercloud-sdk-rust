@@ -7,9 +7,7 @@ use std::{
     str::FromStr,
 };
 
-use chrono::{DateTime, Utc};
-use log::{Level, debug, log_enabled};
-use oauth10a::client::{
+use crate::oauth10a::{
     ClientError, Request, RestClient,
     reqwest::{
         self, Body, Method,
@@ -17,6 +15,9 @@ use oauth10a::client::{
     },
     url,
 };
+use chrono::{DateTime, Utc};
+#[cfg(feature = "logging")]
+use log::{Level, debug, log_enabled};
 use serde::{Deserialize, Serialize};
 
 use crate::Client;

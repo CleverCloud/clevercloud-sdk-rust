@@ -9,9 +9,9 @@ use std::{
     str::FromStr,
 };
 
+use crate::oauth10a::{ClientError, RestClient};
 #[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
@@ -26,7 +26,7 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse version from '{0}', available versions are 5.7 and 8.0")]
+    #[error("failed to parse version from '{0}', available versions are 5.7, 8.0 and 8.4")]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
     Get(AddonProviderId, ClientError),
@@ -110,4 +110,31 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .get(&path)
         .await
         .map_err(|err| Error::Get(AddonProviderId::MySql, err))
+}
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [
+            ("5.7", Version::V5dot7),
+            ("8.0", Version::V8dot0),
+            ("8.4", Version::V8dot4),
+        ] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("5.6").is_err());
+    }
 }

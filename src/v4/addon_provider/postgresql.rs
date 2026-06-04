@@ -10,9 +10,9 @@ use std::{
     str::FromStr,
 };
 
+use crate::oauth10a::{ClientError, RestClient};
 #[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
@@ -28,7 +28,7 @@ use crate::{
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(
-        "failed to parse version from '{0}', available versions are 17, 16, 15, 14, 13, 12 and 11"
+        "failed to parse version from '{0}', available versions are 18, 17, 16, 15, 14, 13, 12 and 11"
     )]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
@@ -50,6 +50,7 @@ pub enum Version {
     V15 = 15,
     V16 = 16,
     V17 = 17,
+    V18 = 18,
 }
 
 impl FromStr for Version {
@@ -57,6 +58,7 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
+            "18" => Self::V18,
             "17" => Self::V17,
             "16" => Self::V16,
             "15" => Self::V15,
@@ -89,6 +91,7 @@ impl Into<String> for Version {
 impl Display for Version {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
+            Self::V18 => write!(f, "18"),
             Self::V17 => write!(f, "17"),
             Self::V16 => write!(f, "16"),
             Self::V15 => write!(f, "15"),
@@ -125,4 +128,36 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .get(&path)
         .await
         .map_err(|err| Error::Get(AddonProviderId::PostgreSql, err))
+}
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [
+            ("18", Version::V18),
+            ("17", Version::V17),
+            ("16", Version::V16),
+            ("15", Version::V15),
+            ("14", Version::V14),
+            ("13", Version::V13),
+            ("12", Version::V12),
+            ("11", Version::V11),
+        ] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("42").is_err());
+    }
 }

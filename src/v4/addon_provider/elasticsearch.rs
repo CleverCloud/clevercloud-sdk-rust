@@ -10,9 +10,9 @@ use std::{
     str::FromStr,
 };
 
+use crate::oauth10a::{ClientError, RestClient};
 #[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
@@ -27,7 +27,7 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse version from '{0}', available version are 7 and 8")]
+    #[error("failed to parse version from '{0}', available versions are 7, 8 and 9")]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
     Get(AddonProviderId, ClientError),
@@ -43,6 +43,7 @@ pub enum Error {
 pub enum Version {
     V7 = 7,
     V8 = 8,
+    V9 = 9,
 }
 
 impl FromStr for Version {
@@ -52,6 +53,7 @@ impl FromStr for Version {
         Ok(match s {
             "7" => Self::V7,
             "8" => Self::V8,
+            "9" => Self::V9,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
             }
@@ -79,6 +81,7 @@ impl Display for Version {
         match self {
             Self::V7 => write!(f, "7"),
             Self::V8 => write!(f, "8"),
+            Self::V9 => write!(f, "9"),
         }
     }
 }
@@ -108,4 +111,27 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .get(&path)
         .await
         .map_err(|err| Error::Get(AddonProviderId::ElasticSearch, err))
+}
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [("7", Version::V7), ("8", Version::V8), ("9", Version::V9)] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("6").is_err());
+    }
 }

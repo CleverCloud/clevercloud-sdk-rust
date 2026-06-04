@@ -9,7 +9,7 @@ jobs:
       fail-fast: true
       matrix:
         rust:
-          - 1.85.0
+          - 1.91.0
           - stable
           - beta
           - nightly
@@ -31,7 +31,7 @@ jobs:
       fail-fast: true
       matrix:
         rust:
-          - 1.85.0
+          - 1.91.0
           - stable
           - beta
           - nightly
@@ -45,7 +45,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: install
-          args: cargo-tarpaulin
+          args: cargo-tarpaulin --version 0.35.4 --locked
       - uses: actions-rs/cargo@v1
         with:
           command: tarpaulin

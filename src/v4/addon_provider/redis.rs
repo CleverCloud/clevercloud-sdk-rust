@@ -10,9 +10,9 @@ use std::{
     str::FromStr,
 };
 
+use crate::oauth10a::{ClientError, RestClient};
 #[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
-use oauth10a::client::{ClientError, RestClient};
 #[cfg(feature = "jsonschemas")]
 use schemars::JsonSchema_repr as JsonSchemaRepr;
 use serde_repr::{Deserialize_repr as DeserializeRepr, Serialize_repr as SerializeRepr};
@@ -27,7 +27,7 @@ use crate::{
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("failed to parse version from {0}, available version is 7.2.4")]
+    #[error("failed to parse version from {0}, available versions are 8.6.1 and 7.2.4")]
     ParseVersion(String),
     #[error("failed to get information about addon provider '{0}', {1}")]
     Get(AddonProviderId, ClientError),
@@ -42,6 +42,7 @@ pub enum Error {
 #[repr(i32)]
 pub enum Version {
     V7dot2dot4 = 724,
+    V8dot6dot1 = 861,
 }
 
 impl FromStr for Version {
@@ -49,6 +50,7 @@ impl FromStr for Version {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
+            "8.6.1" => Self::V8dot6dot1,
             "7.2.4" => Self::V7dot2dot4,
             _ => {
                 return Err(Error::ParseVersion(s.to_owned()));
@@ -76,6 +78,7 @@ impl Display for Version {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::V7dot2dot4 => write!(f, "7.2.4"),
+            Self::V8dot6dot1 => write!(f, "8.6.1"),
         }
     }
 }
@@ -105,4 +108,30 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .get(&path)
         .await
         .map_err(|err| Error::Get(AddonProviderId::Redis, err))
+}
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [
+            ("8.6.1", Version::V8dot6dot1),
+            ("7.2.4", Version::V7dot2dot4),
+        ] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("7.2").is_err());
+    }
 }

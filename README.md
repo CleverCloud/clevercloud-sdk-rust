@@ -16,7 +16,7 @@ This crate is under development, you can use it, but it may have bugs or unimple
 To install this dependency, just add the following line to your `Cargo.toml` manifest.
 
 ```toml
-clevercloud-sdk = { version = "^0.11.1", features = ["metrics", "jsonschemas"] }
+clevercloud-sdk = { version = "^0.16.0", features = ["metrics", "jsonschemas"] }
 ```
 
 ## Usage
@@ -27,11 +27,11 @@ myself.
 ```rust
 use std::error::Error;
 
-use clevercloud_sdk::{Client, v2::myself::{self, Myself}};
+use clevercloud_sdk::{Client, Credentials, v2::myself::{self, Myself}};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
-    let client = Client::from(Credentials {
+    let client = Client::from(Credentials::OAuth1 {
         token: "".to_string(),
         secret: "".to_string(),
         consumer_key: "".to_string(),
@@ -44,13 +44,13 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 }
 ```
 
-You could found more examples of how you could use the clevercloud-sdk by looking at the [command line](examples/cli/README.md) example.
+You could found more examples of how you could use the clevercloud-sdk by looking at the [command line](examples/cleverctl/README.md) example.
 
 ## Features
 
 | name        | description                                                                                      |
 | ----------- |--------------------------------------------------------------------------------------------------|
-| trace       | Use `tracing` crate to expose traces                                                             |
+| tracing     | Use `tracing` crate to expose traces                                                             |
 | jsonschemas | Use `schemars` to add a derive instruction to generate json schemas representation of structures |
 | logging     | Use the `log` facility crate to print logs. Implies `oauth10a/logging` feature                   |
 | metrics     | Expose HTTP metrics through `oauth10a` crate feature.                                            |
