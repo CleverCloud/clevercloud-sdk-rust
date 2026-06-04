@@ -9,14 +9,16 @@
 
 ## Status
 
-This crate is under development, you can use it, but it may have bugs or unimplemented features.
+This crate is stable and follows [Semantic Versioning](https://semver.org/). The public
+API tracks the Clever Cloud API; not every endpoint is implemented yet, and contributions
+are welcome. See [`CHANGELOG.md`](CHANGELOG.md) for the release history.
 
 ## Installation
 
 To install this dependency, just add the following line to your `Cargo.toml` manifest.
 
 ```toml
-clevercloud-sdk = { version = "^0.16.0", features = ["metrics", "jsonschemas"] }
+clevercloud-sdk = { version = "^1.0.0", features = ["metrics", "jsonschemas"] }
 ```
 
 ## Usage
