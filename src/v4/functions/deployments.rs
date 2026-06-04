@@ -16,6 +16,7 @@ use crate::oauth10a::{
     url,
 };
 use chrono::{DateTime, Utc};
+#[cfg(feature = "logging")]
 use log::{Level, debug, log_enabled};
 use serde::{Deserialize, Serialize};
 
