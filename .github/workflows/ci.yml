@@ -45,7 +45,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: install
-          args: cargo-tarpaulin
+          args: cargo-tarpaulin --version 0.35.4 --locked
       - uses: actions-rs/cargo@v1
         with:
           command: tarpaulin
