@@ -5,6 +5,14 @@ All notable changes to the `clevercloud-sdk` crate are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-06-04
+
+### Changed
+- Update the Redis add-on version from `8.6.1` to `8.8.0`. Clever Cloud upgraded the
+  Redis version it offers shortly after the `1.0.0` release, so follow the catalog:
+  rename the `redis::Version` variant `V8dot6dot1` (repr `861`) to `V8dot8dot0`
+  (repr `880`). `7.2.4` is kept for backward compatibility with existing instances.
+
 ## [1.0.0] - 2026-06-04
 
 First stable release of `clevercloud-sdk`. This release graduates the crate to a
@@ -297,6 +305,7 @@ major version will require a corresponding major bump of this crate.
   `myself` / self account) and the v4 add-on-provider surface (PostgreSQL provider with
   plans), plus project scaffolding (CI workflow, license, README, code of conduct).
 
+[1.0.1]: https://github.com/CleverCloud/clevercloud-sdk-rust/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/CleverCloud/clevercloud-sdk-rust/compare/v0.15.0...v1.0.0
 [0.15.0]: https://github.com/CleverCloud/clevercloud-sdk-rust/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/CleverCloud/clevercloud-sdk-rust/compare/v0.13.6...v0.14.0
