@@ -190,7 +190,7 @@ pub enum Credentials {
 }
 
 impl Default for Credentials {
-    #[tracing::instrument(skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     fn default() -> Self {
         Self::OAuth1 {
             token: String::new(),
@@ -202,7 +202,7 @@ impl Default for Credentials {
 }
 
 impl From<OAuthCredentials> for Credentials {
-    #[tracing::instrument(skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     fn from(credentials: OAuthCredentials) -> Self {
         match credentials {
             OAuthCredentials::Bearer { token } => Self::Bearer {
@@ -228,7 +228,7 @@ impl From<OAuthCredentials> for Credentials {
 }
 
 impl From<Credentials> for OAuthCredentials {
-    #[tracing::instrument(skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     fn from(credentials: Credentials) -> Self {
         match credentials {
             Credentials::Bearer { token } => Self::Bearer {
@@ -254,17 +254,17 @@ impl From<Credentials> for OAuthCredentials {
 }
 
 impl Credentials {
-    #[tracing::instrument(skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn bearer(token: String) -> Self {
         Self::Bearer { token }
     }
 
-    #[tracing::instrument(skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn basic(username: String, password: String) -> Self {
         Self::Basic { username, password }
     }
 
-    #[tracing::instrument(skip_all)]
+    #[cfg_attr(feature = "tracing", tracing::instrument(skip_all))]
     pub fn oauth1(
         token: String,
         secret: String,
