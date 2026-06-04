@@ -109,3 +109,29 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .await
         .map_err(|err| Error::Get(AddonProviderId::Redis, err))
 }
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [
+            ("8.6.1", Version::V8dot6dot1),
+            ("7.2.4", Version::V7dot2dot4),
+        ] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("7.2").is_err());
+    }
+}

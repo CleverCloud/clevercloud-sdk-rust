@@ -112,3 +112,26 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .await
         .map_err(|err| Error::Get(AddonProviderId::ElasticSearch, err))
 }
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [("7", Version::V7), ("8", Version::V8), ("9", Version::V9)] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("6").is_err());
+    }
+}

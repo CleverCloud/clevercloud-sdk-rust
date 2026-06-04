@@ -111,3 +111,30 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .await
         .map_err(|err| Error::Get(AddonProviderId::MySql, err))
 }
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [
+            ("5.7", Version::V5dot7),
+            ("8.0", Version::V8dot0),
+            ("8.4", Version::V8dot4),
+        ] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("5.6").is_err());
+    }
+}

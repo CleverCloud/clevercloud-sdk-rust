@@ -129,3 +129,35 @@ pub async fn get(client: &Client) -> Result<AddonProvider<Version>, Error> {
         .await
         .map_err(|err| Error::Get(AddonProviderId::PostgreSql, err))
 }
+
+// -----------------------------------------------------------------------------
+// Tests
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::Version;
+
+    #[test]
+    fn version_string_round_trip() {
+        for (s, version) in [
+            ("18", Version::V18),
+            ("17", Version::V17),
+            ("16", Version::V16),
+            ("15", Version::V15),
+            ("14", Version::V14),
+            ("13", Version::V13),
+            ("12", Version::V12),
+            ("11", Version::V11),
+        ] {
+            assert_eq!(Version::from_str(s).unwrap(), version);
+            assert_eq!(version.to_string(), s);
+        }
+    }
+
+    #[test]
+    fn version_rejects_unknown() {
+        assert!(Version::from_str("42").is_err());
+    }
+}
